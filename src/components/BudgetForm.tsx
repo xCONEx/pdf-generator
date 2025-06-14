@@ -17,6 +17,7 @@ import { PremiumTemplate } from './premium/TemplateSelector';
 import { AdvancedCustomizationOptions } from './premium/AdvancedCustomization';
 import ExclusiveTemplates, { ExclusiveTemplate } from './premium/ExclusiveTemplates';
 import AdvancedAnalytics from './premium/AdvancedAnalytics';
+import PriceInput from './PriceInput';
 
 const BudgetForm = () => {
   const { companyProfile, loading: loadingCompany, saveCompanyProfile } = useCompanyProfile();
@@ -157,10 +158,10 @@ const BudgetForm = () => {
 
   const handleGeneratePDF = async () => {
     try {
-      if (license?.plan !== 'enterprise' && !license) {
+      if (!budgetData.companyInfo.name || !budgetData.clientInfo.name) {
         toast({
-          title: "Funcionalidade Premium",
-          description: "Templates premium disponíveis apenas no plano Enterprise.",
+          title: "Dados Obrigatórios",
+          description: "Preencha os dados da empresa e do cliente antes de gerar o PDF.",
           variant: "destructive",
         });
         return;
@@ -179,6 +180,7 @@ const BudgetForm = () => {
         description: "Seu orçamento foi gerado e está sendo baixado.",
       });
     } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
       toast({
         title: "Erro ao Gerar PDF",
         description: "Ocorreu um erro ao gerar o PDF. Tente novamente.",
@@ -736,19 +738,16 @@ const BudgetForm = () => {
                       </div>
                       <div>
                         <Label className="text-xs">Preço Unit.</Label>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={item.unitPrice === 0 ? '' : item.unitPrice}
-                          onChange={(e) => updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                        <PriceInput
+                          value={item.unitPrice}
+                          onChange={(value) => updateItem(item.id, 'unitPrice', value)}
                           placeholder="0,00"
                         />
                       </div>
                       <div>
                         <Label className="text-xs">Total</Label>
                         <Input
-                          value={`R$ ${item.total.toFixed(2)}`}
+                          value={`R$ ${item.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
                           readOnly
                           className="bg-gray-50"
                         />
@@ -760,7 +759,7 @@ const BudgetForm = () => {
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">Subtotal:</span>
-                    <span className="font-bold">R$ {calculateSubtotal().toFixed(2)}</span>
+                    <span className="font-bold">R$ {calculateSubtotal().toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                   </div>
 
                   <div className="flex items-center gap-2 mb-2">
@@ -778,7 +777,7 @@ const BudgetForm = () => {
 
                   <div className="flex justify-between items-center text-lg font-bold" style={{ color: currentTheme.primary }}>
                     <span>Total Final:</span>
-                    <span>R$ {calculateTotal().toFixed(2)}</span>
+                    <span>R$ {calculateTotal().toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                   </div>
                 </div>
               </CardContent>
