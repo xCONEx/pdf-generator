@@ -210,19 +210,28 @@ const BudgetForm = () => {
     ? selectedPremiumTemplate.colorScheme 
     : COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES];
 
-  // Função para obter gradient com fallback
+  // Função para obter gradient com fallback - corrigida
   const getThemeGradient = () => {
     if (selectedPremiumTemplate?.colorScheme?.gradient) {
       return selectedPremiumTemplate.colorScheme.gradient;
     }
     
-    // Para temas padrão, acessar o gradient diretamente do COLOR_THEMES
-    const standardTheme = COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES];
-    if (standardTheme?.gradient) {
-      return standardTheme.gradient;
+    // Para temas padrão, usar gradients baseados na cor primária
+    const theme = COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES];
+    switch (budgetData.colorTheme) {
+      case 'blue':
+        return 'from-blue-500 to-blue-600';
+      case 'green':
+        return 'from-green-500 to-green-600';
+      case 'purple':
+        return 'from-purple-500 to-purple-600';
+      case 'red':
+        return 'from-red-500 to-red-600';
+      case 'orange':
+        return 'from-orange-500 to-orange-600';
+      default:
+        return 'from-blue-500 to-blue-600';
     }
-    
-    return 'from-blue-500 to-blue-600'; // fallback padrão
   };
 
   if (loadingCompany || loadingClients) {

@@ -73,7 +73,6 @@ export const useCompanyProfile = () => {
         .maybeSingle();
 
       const profileData = {
-        user_id: user.id,
         name: companyInfo.name,
         email: companyInfo.email,
         phone: companyInfo.phone,
@@ -86,18 +85,23 @@ export const useCompanyProfile = () => {
 
       if (existingProfile) {
         // Atualizar perfil existente
+        console.log('Atualizando perfil existente com ID:', existingProfile.id);
         result = await supabase
           .from('company_profiles')
           .update(profileData)
-          .eq('user_id', user.id);
+          .eq('id', existingProfile.id)
+          .select();
       } else {
         // Criar novo perfil
+        console.log('Criando novo perfil para o usuário:', user.id);
         result = await supabase
           .from('company_profiles')
-          .insert({
+          .insert([{
+            user_id: user.id,
             ...profileData,
             created_at: new Date().toISOString()
-          });
+          }])
+          .select();
       }
 
       if (result.error) {
@@ -105,6 +109,7 @@ export const useCompanyProfile = () => {
         throw result.error;
       }
 
+      console.log('Perfil salvo com sucesso:', result.data);
       setCompanyProfile(companyInfo);
       toast({
         title: "Sucesso!",
