@@ -5,6 +5,8 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Se as variáveis não estão configuradas, criar um cliente mock
+let supabase: any;
+
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Variáveis de ambiente do Supabase não configuradas. Conecte o projeto ao Supabase.');
   
@@ -29,7 +31,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
     rpc: () => Promise.resolve({ data: null, error: { message: 'Supabase não configurado' } }),
   };
   
-  export const supabase = mockSupabase as any;
+  supabase = mockSupabase;
 } else {
-  export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  supabase = createClient(supabaseUrl, supabaseAnonKey);
 }
+
+export { supabase };
