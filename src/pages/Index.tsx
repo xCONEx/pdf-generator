@@ -23,9 +23,20 @@ const Index = () => {
   const isAdmin = user?.email === 'adm.financeflow@gmail.com' || user?.email === 'yuriadrskt@gmail.com';
   const isEnterpriseOrAdmin = license?.plan === 'enterprise' || isAdmin;
 
+  // Debug logging
+  console.log('=== DEBUG INFO ===');
+  console.log('User email:', user?.email);
+  console.log('License:', license);
+  console.log('Is Admin:', isAdmin);
+  console.log('Is Enterprise or Admin:', isEnterpriseOrAdmin);
+  console.log('License plan:', license?.plan);
+  console.log('License status:', license?.status);
+  console.log('==================');
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
+      console.log('User loaded:', user?.email);
     });
   }, []);
 
@@ -49,6 +60,9 @@ const Index = () => {
             Sua licença não está ativa ou expirou. Entre em contato com o suporte para renovar.
           </p>
           <div className="space-y-3">
+            <p className="text-sm text-gray-500">
+              Debug: License = {license ? JSON.stringify(license) : 'null'}
+            </p>
             <button
               onClick={() => supabase.auth.signOut()}
               className="w-full bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
@@ -98,6 +112,17 @@ const Index = () => {
               <h1 className="text-3xl font-bold text-gray-900">
                 Gerador de Orçamentos
               </h1>
+              
+              {/* Debug Info Card - Visible for testing */}
+              <div className="mt-2 p-3 bg-yellow-100 border border-yellow-300 rounded-lg text-sm">
+                <div className="font-semibold">Info de Debug:</div>
+                <div>Email: {user?.email || 'N/A'}</div>
+                <div>Plano: {license?.plan || 'N/A'}</div>
+                <div>Status: {license?.status || 'N/A'}</div>
+                <div>É Admin: {isAdmin ? 'Sim' : 'Não'}</div>
+                <div>É Enterprise ou Admin: {isEnterpriseOrAdmin ? 'Sim' : 'Não'}</div>
+              </div>
+
               {isEnterpriseOrAdmin && (
                 <div className="flex items-center gap-2 mt-2">
                   <Crown className="w-5 h-5 text-yellow-500" />
@@ -113,7 +138,10 @@ const Index = () => {
             {isEnterpriseOrAdmin && (
               <div className="flex flex-wrap gap-2">
                 <Button
-                  onClick={() => setShowExclusiveTemplates(!showExclusiveTemplates)}
+                  onClick={() => {
+                    console.log('Clicando em Templates Exclusivos');
+                    setShowExclusiveTemplates(!showExclusiveTemplates);
+                  }}
                   className="bg-gradient-to-r from-yellow-500 to-purple-500 hover:from-yellow-600 hover:to-purple-600"
                   size="sm"
                 >
@@ -123,7 +151,10 @@ const Index = () => {
                 </Button>
                 
                 <Button
-                  onClick={() => setShowAdvancedAnalytics(!showAdvancedAnalytics)}
+                  onClick={() => {
+                    console.log('Clicando em Analytics Avançados');
+                    setShowAdvancedAnalytics(!showAdvancedAnalytics);
+                  }}
                   className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
                   size="sm"
                 >
@@ -133,7 +164,10 @@ const Index = () => {
                 </Button>
                 
                 <Button
-                  onClick={() => setShowAllPremiumFeatures(!showAllPremiumFeatures)}
+                  onClick={() => {
+                    console.log('Clicando em Todas as Funcionalidades');
+                    setShowAllPremiumFeatures(!showAllPremiumFeatures);
+                  }}
                   className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
                   size="sm"
                 >
@@ -145,6 +179,24 @@ const Index = () => {
             )}
           </div>
         </div>
+
+        {/* Show message if NOT Enterprise/Admin */}
+        {!isEnterpriseOrAdmin && (
+          <div className="mb-8">
+            <Card className="border-2 border-dashed border-gray-300 bg-gray-50">
+              <CardContent className="p-8 text-center">
+                <Crown className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2 text-gray-600">Funcionalidades Premium</h3>
+                <p className="text-gray-500 mb-4">
+                  Templates exclusivos e analytics avançados disponíveis apenas para usuários Enterprise e Admins.
+                </p>
+                <p className="text-sm text-gray-400">
+                  Seu plano atual: {getPlanDisplayName() || 'N/A'}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Premium Features Showcase for Enterprise/Admin */}
         {isEnterpriseOrAdmin && (
@@ -242,7 +294,13 @@ const Index = () => {
             {/* Premium Features Overview Cards */}
             {!showExclusiveTemplates && !showAdvancedAnalytics && !showAllPremiumFeatures && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-purple-50">
+                <Card 
+                  className="hover:shadow-lg transition-shadow cursor-pointer border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-purple-50"
+                  onClick={() => {
+                    console.log('Card Templates clicado');
+                    setShowExclusiveTemplates(true);
+                  }}
+                >
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Sparkles className="w-5 h-5 text-purple-500" />
@@ -255,7 +313,11 @@ const Index = () => {
                       6 templates únicos e exclusivos para seu negócio
                     </p>
                     <Button 
-                      onClick={() => setShowExclusiveTemplates(true)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log('Botão Templates clicado');
+                        setShowExclusiveTemplates(true);
+                      }}
                       className="w-full bg-gradient-to-r from-yellow-500 to-purple-500"
                       size="sm"
                     >
@@ -264,7 +326,13 @@ const Index = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+                <Card 
+                  className="hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50"
+                  onClick={() => {
+                    console.log('Card Analytics clicado');
+                    setShowAdvancedAnalytics(true);
+                  }}
+                >
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg flex items-center gap-2">
                       <BarChart3 className="w-5 h-5 text-blue-500" />
@@ -277,7 +345,11 @@ const Index = () => {
                       Relatórios detalhados e insights do seu negócio
                     </p>
                     <Button 
-                      onClick={() => setShowAdvancedAnalytics(true)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log('Botão Analytics clicado');
+                        setShowAdvancedAnalytics(true);
+                      }}
                       className="w-full bg-gradient-to-r from-blue-500 to-indigo-600"
                       size="sm"
                     >
@@ -286,7 +358,13 @@ const Index = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50">
+                <Card 
+                  className="hover:shadow-lg transition-shadow cursor-pointer border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50"
+                  onClick={() => {
+                    console.log('Card Todas Funcionalidades clicado');
+                    setShowAllPremiumFeatures(true);
+                  }}
+                >
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Archive className="w-5 h-5 text-green-500" />
@@ -299,7 +377,11 @@ const Index = () => {
                       Acesso completo a todas as funcionalidades premium
                     </p>
                     <Button 
-                      onClick={() => setShowAllPremiumFeatures(true)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log('Botão Todas Funcionalidades clicado');
+                        setShowAllPremiumFeatures(true);
+                      }}
                       className="w-full bg-gradient-to-r from-green-500 to-green-600"
                       size="sm"
                     >
