@@ -18,8 +18,11 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          {/* Páginas públicas - sem AuthGuard */}
           <Route path="/vendas" element={<SalesPage />} />
           <Route path="/vendas.html" element={<SalesPage />} />
+          
+          {/* Páginas protegidas - com AuthGuard */}
           <Route path="/" element={
             <AuthGuard>
               <Index />

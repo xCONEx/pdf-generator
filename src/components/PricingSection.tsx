@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check } from 'lucide-react';
@@ -32,7 +31,7 @@ const PricingSection = () => {
         'Logo da empresa',
         'Múltiplos temas'
       ],
-      link: 'https://pay.cakto.com.br/hkf8kro',
+      link: 'https://pay.cakto.com.br/c4jwped',
       popular: true
     },
     {
