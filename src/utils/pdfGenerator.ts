@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { BudgetData, COLOR_THEMES } from '@/types/budget';
 
@@ -43,8 +42,11 @@ export const generatePDF = async (budgetData: BudgetData) => {
     // Logo ou nome da empresa
     if (budgetData.companyInfo.logoUrl) {
       try {
-        pdf.addImage(budgetData.companyInfo.logoUrl, 'JPEG', margin, 5, 25, 15);
-        pdf.text('ORÇAMENTO', margin + 30, 18);
+        // Dimensões limitadas para a logo sem redimensionar forçadamente
+        const logoMaxWidth = 30;
+        const logoMaxHeight = 15;
+        pdf.addImage(budgetData.companyInfo.logoUrl, 'JPEG', margin, 5, logoMaxWidth, logoMaxHeight);
+        pdf.text('ORÇAMENTO', margin + 35, 18);
       } catch {
         pdf.text(`${budgetData.companyInfo.name} - ORÇAMENTO`, margin, 18);
       }
@@ -122,7 +124,7 @@ export const generatePDF = async (budgetData: BudgetData) => {
   });
   yPosition += 10;
 
-  // Seção de dados do cliente
+  // Seção de dados do cliente (mesmo tamanho que empresa)
   checkPageBreak(25);
   addSection('DADOS DO CLIENTE', yPosition);
   yPosition += 15;
@@ -172,11 +174,11 @@ Confiamos que nossa proposta atenderá perfeitamente às suas expectativas, ofer
   pdf.setFontSize(9);
   pdf.setFont('helvetica', 'bold');
   
-  // Colunas da tabela
+  // Colunas da tabela ajustadas
   const col1 = margin + 2;
-  const col2 = margin + 100;
-  const col3 = margin + 125;
-  const col4 = margin + 155;
+  const col2 = margin + 90;
+  const col3 = margin + 115;
+  const col4 = margin + 145;
   
   pdf.text('DESCRIÇÃO', col1, yPosition);
   pdf.text('QTD', col2, yPosition);
@@ -202,10 +204,11 @@ Confiamos que nossa proposta atenderá perfeitamente às suas expectativas, ofer
     pdf.rect(margin, yPosition - 4, contentWidth, 8);
     
     // Conteúdo da linha
-    const description = item.description.length > 35 ? item.description.substring(0, 35) + '...' : item.description;
+    const description = item.description.length > 30 ? item.description.substring(0, 30) + '...' : item.description;
     pdf.text(description, col1, yPosition);
     pdf.text(item.quantity.toString(), col2, yPosition);
     pdf.text(`R$ ${item.unitPrice.toFixed(2)}`, col3, yPosition);
+    // Alinhamento ajustado para o valor total não sair da caixa
     pdf.text(`R$ ${item.total.toFixed(2)}`, col4, yPosition);
     
     subtotal += item.total;
@@ -228,6 +231,8 @@ Confiamos que nossa proposta atenderá perfeitamente às suas expectativas, ofer
   
   pdf.setFontSize(11);
   pdf.setFont('helvetica', 'bold');
+  // Cor do texto corrigida para ser visível
+  pdf.setTextColor(0, 0, 0);
   
   // Subtotal
   pdf.text('Subtotal:', margin + 85, yPosition + 8);

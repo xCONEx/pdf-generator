@@ -144,7 +144,12 @@ const BudgetForm = () => {
                       className="flex items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 transition-colors"
                     >
                       {logoPreview ? (
-                        <img src={logoPreview} alt="Logo" className="max-h-28 max-w-full object-contain" />
+                        <img 
+                          src={logoPreview} 
+                          alt="Logo" 
+                          className="max-h-28 max-w-full object-contain"
+                          style={{ maxWidth: '200px', maxHeight: '112px' }}
+                        />
                       ) : (
                         <div className="text-center">
                           <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
@@ -343,7 +348,7 @@ const BudgetForm = () => {
                           type="number"
                           min="0"
                           step="0.01"
-                          value={item.unitPrice || ''}
+                          value={item.unitPrice === 0 ? '' : item.unitPrice}
                           onChange={(e) => updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
                           placeholder="0,00"
                         />
@@ -372,9 +377,10 @@ const BudgetForm = () => {
                       type="number"
                       min="0"
                       max="100"
-                      value={budgetData.discount}
+                      value={budgetData.discount === 0 ? '' : budgetData.discount}
                       onChange={(e) => setBudgetData(prev => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))}
                       className="w-20"
+                      placeholder="0"
                     />
                   </div>
 
