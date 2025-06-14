@@ -2,7 +2,7 @@
 import BudgetForm from '@/components/BudgetForm';
 import UserDashboard from '@/components/UserDashboard';
 import { useLicenseValidation } from '@/hooks/useLicenseValidation';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 

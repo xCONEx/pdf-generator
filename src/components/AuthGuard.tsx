@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import LoginForm from './LoginForm';
 import AdminPanel from './AdminPanel';
 import { User } from '@supabase/supabase-js';

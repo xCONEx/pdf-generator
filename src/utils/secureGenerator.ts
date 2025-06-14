@@ -1,5 +1,5 @@
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { BudgetData } from '@/types/budget';
 
 export const generateSecurePDF = async (budgetData: BudgetData): Promise<Blob> => {
