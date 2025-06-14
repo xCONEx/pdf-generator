@@ -11,58 +11,63 @@ interface PriceInputProps {
 
 const PriceInput: React.FC<PriceInputProps> = ({ value, onChange, placeholder = "0,00", className }) => {
   const [displayValue, setDisplayValue] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
-    if (value === 0) {
-      setDisplayValue('');
-    } else {
-      setDisplayValue(formatPrice(value));
+    if (!isFocused) {
+      if (value === 0) {
+        setDisplayValue('');
+      } else {
+        setDisplayValue(formatCurrency(value));
+      }
     }
-  }, [value]);
+  }, [value, isFocused]);
 
-  const formatPrice = (price: number): string => {
-    return price.toLocaleString('pt-BR', {
+  const formatCurrency = (amount: number): string => {
+    return amount.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
   };
 
-  const parsePrice = (str: string): number => {
-    // Remove tudo exceto números, vírgulas e pontos
-    const cleaned = str.replace(/[^\d.,]/g, '');
+  const formatNumber = (amount: number): string => {
+    return amount.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
+  const parseCurrency = (str: string): number => {
+    if (!str || str.trim() === '') return 0;
     
-    // Se tem vírgula e ponto, assume que ponto é separador de milhares
+    // Remove símbolos de moeda e espaços
+    let cleaned = str.replace(/[R$\s]/g, '');
+    
+    // Se não tem vírgula nem ponto, trata como centavos se for menor que 100
+    if (!cleaned.includes(',') && !cleaned.includes('.')) {
+      const num = parseInt(cleaned) || 0;
+      return num;
+    }
+    
+    // Se tem vírgula e ponto, vírgula é decimal
     if (cleaned.includes(',') && cleaned.includes('.')) {
       const lastComma = cleaned.lastIndexOf(',');
       const lastDot = cleaned.lastIndexOf('.');
       
       if (lastComma > lastDot) {
-        // Vírgula é decimal: 1.234,56
-        return parseFloat(cleaned.replace(/\./g, '').replace(',', '.'));
+        // Formato brasileiro: 1.234,56
+        cleaned = cleaned.replace(/\./g, '').replace(',', '.');
       } else {
-        // Ponto é decimal: 1,234.56
-        return parseFloat(cleaned.replace(/,/g, ''));
+        // Formato americano: 1,234.56
+        cleaned = cleaned.replace(/,/g, '');
       }
+    } else if (cleaned.includes(',')) {
+      // Só vírgula - assumir como decimal brasileiro
+      cleaned = cleaned.replace(',', '.');
     }
     
-    // Só vírgula - assumir como decimal
-    if (cleaned.includes(',') && !cleaned.includes('.')) {
-      return parseFloat(cleaned.replace(',', '.'));
-    }
-    
-    // Só ponto - pode ser decimal ou milhares
-    if (cleaned.includes('.') && !cleaned.includes(',')) {
-      const parts = cleaned.split('.');
-      if (parts.length === 2 && parts[1].length <= 2) {
-        // Provavelmente decimal
-        return parseFloat(cleaned);
-      } else {
-        // Provavelmente separador de milhares
-        return parseFloat(cleaned.replace(/\./g, ''));
-      }
-    }
-    
-    // Só números
     return parseFloat(cleaned) || 0;
   };
 
@@ -75,18 +80,26 @@ const PriceInput: React.FC<PriceInputProps> = ({ value, onChange, placeholder = 
       return;
     }
 
-    const numericValue = parsePrice(inputValue);
+    const numericValue = parseCurrency(inputValue);
     onChange(numericValue);
   };
 
-  const handleBlur = () => {
+  const handleFocus = () => {
+    setIsFocused(true);
+    // No foco, mostrar apenas o número formatado sem R$
     if (value > 0) {
-      setDisplayValue(formatPrice(value));
+      setDisplayValue(formatNumber(value));
+    } else {
+      setDisplayValue('');
     }
   };
 
-  const handleFocus = () => {
-    if (value === 0) {
+  const handleBlur = () => {
+    setIsFocused(false);
+    // No blur, mostrar com R$
+    if (value > 0) {
+      setDisplayValue(formatCurrency(value));
+    } else {
       setDisplayValue('');
     }
   };
@@ -96,8 +109,8 @@ const PriceInput: React.FC<PriceInputProps> = ({ value, onChange, placeholder = 
       type="text"
       value={displayValue}
       onChange={handleChange}
-      onBlur={handleBlur}
       onFocus={handleFocus}
+      onBlur={handleBlur}
       placeholder={placeholder}
       className={className}
     />

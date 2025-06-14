@@ -26,6 +26,8 @@ export const generateSecurePDF = async (budgetData: BudgetData): Promise<Blob> =
       throw new Error('Limite de PDFs atingido');
     }
 
+    console.log('Chamando Edge Function para gerar PDF...');
+
     // Chamar Edge Function para gerar PDF seguro
     const { data, error } = await supabase.functions.invoke('generate-secure-pdf', {
       body: {
@@ -45,9 +47,17 @@ export const generateSecurePDF = async (budgetData: BudgetData): Promise<Blob> =
       throw new Error('PDF não foi gerado pela Edge Function');
     }
 
-    // Converter base64 para Blob
-    const pdfBlob = base64ToBlob(data.pdf, 'application/pdf');
-    return pdfBlob;
+    console.log('PDF recebido da Edge Function, convertendo para blob...');
+
+    // Converter base64 para Blob de forma mais robusta
+    try {
+      const pdfBlob = base64ToBlob(data.pdf, 'application/pdf');
+      console.log('Blob criado com sucesso, tamanho:', pdfBlob.size);
+      return pdfBlob;
+    } catch (blobError) {
+      console.error('Erro ao converter para blob:', blobError);
+      throw new Error('Erro na conversão do PDF');
+    }
 
   } catch (error) {
     console.error('Erro na geração segura de PDF:', error);
@@ -91,7 +101,10 @@ const generateFingerprint = async (): Promise<string> => {
 
 const base64ToBlob = (base64: string, contentType: string): Blob => {
   try {
-    const byteCharacters = atob(base64);
+    // Remover prefixo data: se existir
+    const base64Data = base64.includes(',') ? base64.split(',')[1] : base64;
+    
+    const byteCharacters = atob(base64Data);
     const byteNumbers = new Array(byteCharacters.length);
     
     for (let i = 0; i < byteCharacters.length; i++) {
@@ -102,6 +115,6 @@ const base64ToBlob = (base64: string, contentType: string): Blob => {
     return new Blob([byteArray], { type: contentType });
   } catch (error) {
     console.error('Erro ao converter base64 para blob:', error);
-    throw new Error('Erro na conversão do PDF');
+    throw new Error('Erro na conversão do PDF - formato inválido');
   }
 };
