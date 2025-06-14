@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -344,8 +343,9 @@ const BudgetForm = () => {
                           type="number"
                           min="0"
                           step="0.01"
-                          value={item.unitPrice}
+                          value={item.unitPrice || ''}
                           onChange={(e) => updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                          placeholder="0,00"
                         />
                       </div>
                       <div>
