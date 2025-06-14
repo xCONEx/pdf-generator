@@ -4,17 +4,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Upload, Download, Save, Users } from 'lucide-react';
+import { Plus, Trash2, Upload, Download, Save, Users, Crown } from 'lucide-react';
 import { BudgetData, ServiceItem, COLOR_THEMES, CompanyInfo, ClientInfo } from '@/types/budget';
 import { generatePDF } from '@/utils/pdfGenerator';
 import { toast } from '@/hooks/use-toast';
 import AdminNavButton from './AdminNavButton';
 import { useCompanyProfile } from '@/hooks/useCompanyProfile';
 import { useSavedClients } from '@/hooks/useSavedClients';
+import { useLicenseValidation } from '@/hooks/useLicenseValidation';
+import PremiumFeatures from './premium/PremiumFeatures';
+import { PremiumTemplate } from './premium/TemplateSelector';
+import { AdvancedCustomizationOptions } from './premium/AdvancedCustomization';
 
 const BudgetForm = () => {
   const { companyProfile, loading: loadingCompany, saveCompanyProfile } = useCompanyProfile();
   const { savedClients, loading: loadingClients, saveClient, deleteClient } = useSavedClients();
+  const { license } = useLicenseValidation();
   
   const [budgetData, setBudgetData] = useState<BudgetData>({
     companyInfo: {
@@ -39,6 +44,9 @@ const BudgetForm = () => {
 
   const [logoPreview, setLogoPreview] = useState<string>('');
   const [showClientModal, setShowClientModal] = useState(false);
+  const [showPremiumFeatures, setShowPremiumFeatures] = useState(false);
+  const [selectedPremiumTemplate, setSelectedPremiumTemplate] = useState<PremiumTemplate | null>(null);
+  const [advancedCustomization, setAdvancedCustomization] = useState<AdvancedCustomizationOptions | null>(null);
 
   // Carregar dados da empresa quando disponível
   useEffect(() => {
@@ -132,7 +140,7 @@ const BudgetForm = () => {
 
   const handleGeneratePDF = async () => {
     try {
-      await generatePDF(budgetData);
+      await generatePDF(budgetData, selectedPremiumTemplate, advancedCustomization);
       toast({
         title: "PDF Gerado com Sucesso!",
         description: "Seu orçamento foi gerado e está sendo baixado.",
@@ -146,7 +154,32 @@ const BudgetForm = () => {
     }
   };
 
-  const currentTheme = COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES];
+  const handlePremiumTemplateSelect = (template: PremiumTemplate) => {
+    setSelectedPremiumTemplate(template);
+    // Aplicar cores do template ao tema atual
+    setBudgetData(prev => ({ ...prev, colorTheme: 'custom' }));
+    toast({
+      title: "Template Aplicado",
+      description: `Template "${template.name}" foi aplicado ao orçamento.`,
+    });
+  };
+
+  const handleAdvancedCustomizationChange = (options: AdvancedCustomizationOptions) => {
+    setAdvancedCustomization(options);
+    toast({
+      title: "Personalização Aplicada",
+      description: "Suas configurações personalizadas foram aplicadas.",
+    });
+  };
+
+  const handleLoadBudgetFromBackup = (loadedBudgetData: BudgetData) => {
+    setBudgetData(loadedBudgetData);
+    setShowPremiumFeatures(false);
+  };
+
+  const currentTheme = selectedPremiumTemplate 
+    ? selectedPremiumTemplate.colorScheme 
+    : COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES];
 
   if (loadingCompany || loadingClients) {
     return (
@@ -161,13 +194,35 @@ const BudgetForm = () => {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div className="text-center flex-1">
-            <h1 className={`text-4xl font-bold bg-gradient-to-r ${currentTheme.gradient} bg-clip-text text-transparent mb-2`}>
+            <h1 className={`text-4xl font-bold bg-gradient-to-r ${currentTheme.gradient || 'from-blue-500 to-blue-600'} bg-clip-text text-transparent mb-2`}>
               Gerador de Orçamentos
             </h1>
             <p className="text-gray-600">Crie orçamentos profissionais e personalizados em PDF</p>
           </div>
-          <AdminNavButton />
+          <div className="flex gap-2">
+            {license?.plan === 'enterprise' && (
+              <Button
+                onClick={() => setShowPremiumFeatures(!showPremiumFeatures)}
+                className="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700"
+              >
+                <Crown className="w-4 h-4 mr-1" />
+                {showPremiumFeatures ? 'Ocultar Premium' : 'Funcionalidades Premium'}
+              </Button>
+            )}
+            <AdminNavButton />
+          </div>
         </div>
+
+        {/* Funcionalidades Premium */}
+        {showPremiumFeatures && license?.plan === 'enterprise' && (
+          <div className="mb-8">
+            <PremiumFeatures 
+              onTemplateSelect={handlePremiumTemplateSelect}
+              onCustomizationChange={handleAdvancedCustomizationChange}
+              onLoadBudget={handleLoadBudgetFromBackup}
+            />
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Formulário */}
@@ -282,14 +337,25 @@ const BudgetForm = () => {
                   {Object.entries(COLOR_THEMES).map(([key, theme]) => (
                     <button
                       key={key}
-                      onClick={() => setBudgetData(prev => ({ ...prev, colorTheme: key }))}
+                      onClick={() => {
+                        setBudgetData(prev => ({ ...prev, colorTheme: key }));
+                        setSelectedPremiumTemplate(null); // Reset premium template when using basic theme
+                      }}
                       className={`w-full h-12 rounded-lg border-2 transition-all ${
-                        budgetData.colorTheme === key ? 'border-gray-800 scale-105' : 'border-gray-200'
+                        budgetData.colorTheme === key && !selectedPremiumTemplate ? 'border-gray-800 scale-105' : 'border-gray-200'
                       }`}
                       style={{ backgroundColor: theme.primary }}
                     />
                   ))}
                 </div>
+                {selectedPremiumTemplate && (
+                  <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800 flex items-center gap-1">
+                      <Crown className="w-4 h-4" />
+                      Template Premium Ativo: {selectedPremiumTemplate.name}
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -512,6 +578,9 @@ const BudgetForm = () => {
                 >
                   <Download className="w-5 h-5 mr-2" />
                   Gerar PDF do Orçamento
+                  {selectedPremiumTemplate && (
+                    <Crown className="w-4 h-4 ml-2" />
+                  )}
                 </Button>
               </CardContent>
             </Card>
