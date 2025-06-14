@@ -55,8 +55,8 @@ serve(async (req) => {
       );
     }
 
-    // Gerar PDF simples (simulação melhorada)
-    const pdfContent = await generateSimplePDF(budgetData, userId, fingerprint);
+    // Gerar PDF completo
+    const pdfContent = await generateCompletePDF(budgetData, userId, fingerprint);
 
     // Registrar geração
     await supabase.from('pdf_generations').insert({
@@ -85,14 +85,18 @@ serve(async (req) => {
   }
 });
 
-async function generateSimplePDF(budgetData: any, userId: string, fingerprint: string): Promise<string> {
+async function generateCompletePDF(budgetData: any, userId: string, fingerprint: string): Promise<string> {
   try {
-    // Criar um PDF simples em formato base64
+    // Calcular totais
+    const subtotal = budgetData.items.reduce((sum: number, item: any) => sum + (item.total || 0), 0);
+    const desconto = subtotal * (budgetData.discount || 0) / 100;
+    const total = subtotal - desconto;
+
+    // Watermark de segurança
     const watermark = `ID: ${userId.slice(-8)} | FP: ${fingerprint} | ${new Date().toISOString()}`;
     
-    // Simular um PDF básico (em produção seria uma biblioteca real)
-    const pdfHeader = '%PDF-1.4\n';
-    const pdfContent = `
+    // Gerar PDF básico mas funcional
+    const pdfContent = `%PDF-1.4
 1 0 obj
 <<
 /Type /Catalog
@@ -114,45 +118,93 @@ endobj
 /Parent 2 0 R
 /MediaBox [0 0 612 792]
 /Contents 4 0 R
+/Resources <<
+/Font <<
+/F1 5 0 R
+>>
+>>
 >>
 endobj
 
 4 0 obj
 <<
-/Length 44
+/Length 800
 >>
 stream
 BT
+/F1 16 Tf
+50 750 Td
+(ORCAMENTO) Tj
+0 -30 Td
 /F1 12 Tf
-100 700 Td
-(Orçamento - ${budgetData.clientInfo.name}) Tj
+(Empresa: ${budgetData.companyInfo.name || 'N/A'}) Tj
+0 -20 Td
+(Cliente: ${budgetData.clientInfo.name || 'N/A'}) Tj
+0 -20 Td
+(Email: ${budgetData.clientInfo.email || 'N/A'}) Tj
+0 -30 Td
+(ITENS:) Tj
+0 -20 Td
+(Qtd  Descricao                    Preco Unit.  Total) Tj
+0 -15 Td
+(${budgetData.items.map((item: any, index: number) => 
+  `${item.quantity}   ${item.description.substring(0, 20)}${item.description.length > 20 ? '...' : ''}   R$ ${item.unitPrice.toFixed(2)}   R$ ${item.total.toFixed(2)}`
+).join('\n')}) Tj
+0 -40 Td
+(Subtotal: R$ ${subtotal.toFixed(2)}) Tj
+0 -15 Td
+(Desconto: R$ ${desconto.toFixed(2)}) Tj
+0 -15 Td
+/F1 14 Tf
+(TOTAL: R$ ${total.toFixed(2)}) Tj
+0 -30 Td
+/F1 10 Tf
+(Validade: ${budgetData.validityDays || 30} dias) Tj
+0 -20 Td
+(${budgetData.specialConditions || 'Sem condicoes especiais'}) Tj
+0 -40 Td
+/F1 8 Tf
+(${watermark}) Tj
 ET
 endstream
 endobj
 
+5 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+endobj
+
 xref
-0 5
+0 6
 0000000000 65535 f 
 0000000009 00000 n 
 0000000058 00000 n 
 0000000115 00000 n 
-0000000206 00000 n 
+0000000273 00000 n 
+0000001125 00000 n 
 trailer
 <<
-/Size 5
+/Size 6
 /Root 1 0 R
 >>
 startxref
-299
-%%EOF
-`;
+1203
+%%EOF`;
 
-    const fullPdf = pdfHeader + pdfContent;
-    
-    // Converter para base64
+    // Converter para base64 corretamente
     const encoder = new TextEncoder();
-    const pdfBytes = encoder.encode(fullPdf);
-    const base64String = btoa(String.fromCharCode(...pdfBytes));
+    const pdfBytes = encoder.encode(pdfContent);
+    
+    // Usar btoa corretamente
+    let base64String = '';
+    const chunk = 1024;
+    for (let i = 0; i < pdfBytes.length; i += chunk) {
+      const chunkBytes = pdfBytes.slice(i, i + chunk);
+      base64String += btoa(String.fromCharCode(...chunkBytes));
+    }
     
     return base64String;
     

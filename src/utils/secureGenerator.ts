@@ -53,6 +53,12 @@ export const generateSecurePDF = async (budgetData: BudgetData): Promise<Blob> =
     try {
       const pdfBlob = base64ToBlob(data.pdf, 'application/pdf');
       console.log('Blob criado com sucesso, tamanho:', pdfBlob.size);
+      
+      // Verificar se o blob não está vazio
+      if (pdfBlob.size === 0) {
+        throw new Error('PDF gerado está vazio');
+      }
+      
       return pdfBlob;
     } catch (blobError) {
       console.error('Erro ao converter para blob:', blobError);
@@ -99,12 +105,13 @@ const generateFingerprint = async (): Promise<string> => {
   }
 };
 
-const base64ToBlob = (base64: string, contentType: string): Blob => {
+const base64ToBlob = (base64: string, contentType: string): Blob => => {
   try {
-    // Remover prefixo data: se existir
-    const base64Data = base64.includes(',') ? base64.split(',')[1] : base64;
+    // Limpar qualquer caractere inválido
+    const cleanBase64 = base64.replace(/[^A-Za-z0-9+/=]/g, '');
     
-    const byteCharacters = atob(base64Data);
+    // Decodificar base64
+    const byteCharacters = atob(cleanBase64);
     const byteNumbers = new Array(byteCharacters.length);
     
     for (let i = 0; i < byteCharacters.length; i++) {
@@ -112,7 +119,10 @@ const base64ToBlob = (base64: string, contentType: string): Blob => {
     }
     
     const byteArray = new Uint8Array(byteNumbers);
-    return new Blob([byteArray], { type: contentType });
+    const blob = new Blob([byteArray], { type: contentType });
+    
+    console.log('Blob criado:', blob.size, 'bytes');
+    return blob;
   } catch (error) {
     console.error('Erro ao converter base64 para blob:', error);
     throw new Error('Erro na conversão do PDF - formato inválido');
