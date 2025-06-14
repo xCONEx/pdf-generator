@@ -9,7 +9,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Variáveis de ambiente do Supabase não configuradas. Conecte o projeto ao Supabase.');
   
   // Cliente mock que simula as funcionalidades básicas
-  export const supabase = {
+  const mockSupabase = {
     auth: {
       getUser: () => Promise.resolve({ data: { user: null }, error: null }),
       getSession: () => Promise.resolve({ data: { session: null }, error: null }),
@@ -28,6 +28,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
     },
     rpc: () => Promise.resolve({ data: null, error: { message: 'Supabase não configurado' } }),
   };
+  
+  export const supabase = mockSupabase as any;
 } else {
   export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 }
