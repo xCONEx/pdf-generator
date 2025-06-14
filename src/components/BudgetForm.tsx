@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -214,9 +215,13 @@ const BudgetForm = () => {
     if (selectedPremiumTemplate?.colorScheme?.gradient) {
       return selectedPremiumTemplate.colorScheme.gradient;
     }
-    if (currentTheme?.gradient) {
-      return currentTheme.gradient;
+    
+    // Para temas padrão, acessar o gradient diretamente do COLOR_THEMES
+    const standardTheme = COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES];
+    if (standardTheme?.gradient) {
+      return standardTheme.gradient;
     }
+    
     return 'from-blue-500 to-blue-600'; // fallback padrão
   };
 
