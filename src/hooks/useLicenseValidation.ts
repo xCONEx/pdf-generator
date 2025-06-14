@@ -20,11 +20,13 @@ export const useLicenseValidation = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    let isMounted = true;
+
     const validateLicense = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         
-        if (!user) {
+        if (!user || !isMounted) {
           setLicense(null);
           setLoading(false);
           return;
@@ -35,6 +37,8 @@ export const useLicenseValidation = () => {
           .select('*')
           .eq('user_id', user.id)
           .single();
+
+        if (!isMounted) return;
 
         if (error) {
           console.error('Erro ao validar licença:', error);
@@ -63,19 +67,30 @@ export const useLicenseValidation = () => {
           setLicense(typedLicense);
         }
       } catch (error) {
-        console.error('Erro na validação de licença:', error);
-        setLicense(null);
+        if (isMounted) {
+          console.error('Erro na validação de licença:', error);
+          setLicense(null);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     validateLicense();
 
-    // Validar licença a cada 5 minutos
-    const interval = setInterval(validateLicense, 5 * 60 * 1000);
+    // Validar licença a cada 5 minutos apenas se o componente ainda estiver montado
+    const interval = setInterval(() => {
+      if (isMounted) {
+        validateLicense();
+      }
+    }, 5 * 60 * 1000);
 
-    return () => clearInterval(interval);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, [toast]);
 
   const canGeneratePDF = (): boolean => {
