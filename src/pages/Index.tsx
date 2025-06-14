@@ -6,6 +6,8 @@ import { useLicenseValidation } from '@/hooks/useLicenseValidation';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
+import { Button } from '@/components/ui/button';
+import { ExternalLink } from 'lucide-react';
 
 const ADMIN_EMAILS = ['adm.financeflow@gmail.com', 'yuriadrskt@gmail.com'];
 
@@ -32,11 +34,20 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
-        {isAdmin && (
-          <div className="mb-6 flex justify-end">
-            <AdminNavButton />
-          </div>
-        )}
+        <div className="mb-6 flex justify-between items-center">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open('/vendas', '_blank')}
+            className="flex items-center space-x-2"
+          >
+            <span>Página de Vendas</span>
+            <ExternalLink size={16} />
+          </Button>
+          
+          {isAdmin && <AdminNavButton />}
+        </div>
+        
         {user && license && (
           <UserDashboard user={user} license={license} />
         )}
