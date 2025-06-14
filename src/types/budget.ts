@@ -36,6 +36,21 @@ export interface BudgetData {
   advancedCustomization?: any;
 }
 
+export interface SavedBudget {
+  id: string;
+  user_id: string;
+  client_name: string;
+  total_value: number;
+  items: ServiceItem[];
+  validity_days: number;
+  discount: number;
+  color_theme: string;
+  special_conditions: string;
+  observations: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export const COLOR_THEMES = {
   blue: {
     primary: '#3B82F6',
