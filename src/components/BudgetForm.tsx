@@ -303,19 +303,9 @@ const BudgetForm = () => {
           </div>
         </div>
 
-        {/* Cards Premium - Entre o título e o formulário */}
+        {/* Premium Cards - Entre o título e o formulário */}
         {hasAccessToPremium && (
           <div className="mb-8 space-y-6">
-            <div className="bg-gradient-to-r from-yellow-400 via-purple-500 to-blue-500 p-1 rounded-xl">
-              <div className="bg-white p-4 rounded-lg">
-                <h2 className="text-2xl font-bold text-center text-gray-800 flex items-center justify-center gap-2">
-                  <Crown className="w-8 h-8 text-yellow-500" />
-                  ÁREA PREMIUM ENTERPRISE
-                  <Sparkles className="w-8 h-8 text-purple-500" />
-                </h2>
-              </div>
-            </div>
-
             {/* Exclusive Templates Section */}
             {showExclusiveTemplates && (
               <Card className="shadow-xl border-2 border-yellow-300 bg-gradient-to-br from-yellow-50 to-purple-50">
@@ -628,7 +618,7 @@ const BudgetForm = () => {
               </CardContent>
             </Card>
 
-            {/* Tema de Cores - CORRIGIDO PARA APARECER SEMPRE */}
+            {/* Tema de Cores - SEMPRE VISÍVEL */}
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle style={{ color: currentTheme.primary }}>Escolha o Tema</CardTitle>
