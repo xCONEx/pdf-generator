@@ -89,7 +89,7 @@ export const useCompanyProfile = () => {
         result = await supabase
           .from('company_profiles')
           .update(profileData)
-          .eq('id', existingProfile.id)
+          .eq('user_id', user.id)
           .select();
       } else {
         // Criar novo perfil
