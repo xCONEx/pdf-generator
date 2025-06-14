@@ -5,8 +5,13 @@ import PricingSection from '@/components/PricingSection';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Check, Star, ArrowRight } from 'lucide-react';
+import { useEffect } from 'react';
 
 const SalesPage = () => {
+  useEffect(() => {
+    console.log('SalesPage component mounted');
+  }, []);
+
   const features = [
     'Geração de PDFs profissionais e personalizados',
     'Templates com diferentes temas de cores',
