@@ -44,7 +44,7 @@ export const generatePDF = async (budgetData: BudgetData) => {
       try {
         // Dimensões limitadas para a logo sem redimensionar forçadamente
         const logoMaxWidth = 30;
-        const logoMaxHeight = 15;
+        const logoMaxHeight = 20;
         pdf.addImage(budgetData.companyInfo.logoUrl, 'JPEG', margin, 5, logoMaxWidth, logoMaxHeight);
         pdf.text('ORÇAMENTO', margin + 35, 18);
       } catch {
@@ -128,6 +128,9 @@ export const generatePDF = async (budgetData: BudgetData) => {
   checkPageBreak(25);
   addSection('DADOS DO CLIENTE', yPosition);
   yPosition += 15;
+
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
 
   const clientData = [
     `Cliente: ${budgetData.clientInfo.name}`,
