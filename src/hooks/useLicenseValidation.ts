@@ -39,7 +39,7 @@ export const useLicenseValidation = () => {
         if (error) {
           console.error('Erro ao validar licença:', error);
           setLicense(null);
-        } else {
+        } else if (data) {
           // Verificar se a licença expirou
           if (new Date(data.expires_at) < new Date()) {
             await supabase

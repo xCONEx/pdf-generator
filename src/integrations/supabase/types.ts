@@ -9,13 +9,129 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      pdf_generations: {
+        Row: {
+          client_name: string
+          created_at: string | null
+          fingerprint: string | null
+          id: string
+          ip_address: unknown | null
+          total_value: number | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          client_name: string
+          created_at?: string | null
+          fingerprint?: string | null
+          id?: string
+          ip_address?: unknown | null
+          total_value?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          client_name?: string
+          created_at?: string | null
+          fingerprint?: string | null
+          id?: string
+          ip_address?: unknown | null
+          total_value?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      purchases: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          email: string
+          external_id: string | null
+          id: string
+          payment_status: string | null
+          plan: string
+          processed: boolean | null
+          product_name: string
+          webhook_data: Json | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          email: string
+          external_id?: string | null
+          id?: string
+          payment_status?: string | null
+          plan: string
+          processed?: boolean | null
+          product_name: string
+          webhook_data?: Json | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          email?: string
+          external_id?: string | null
+          id?: string
+          payment_status?: string | null
+          plan?: string
+          processed?: boolean | null
+          product_name?: string
+          webhook_data?: Json | null
+        }
+        Relationships: []
+      }
+      user_licenses: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          expires_at: string
+          id: string
+          pdf_limit: number
+          pdfs_generated: number | null
+          plan: string
+          purchase_reference: string | null
+          status: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          expires_at: string
+          id?: string
+          pdf_limit: number
+          pdfs_generated?: number | null
+          plan: string
+          purchase_reference?: string | null
+          status: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          expires_at?: string
+          id?: string
+          pdf_limit?: number
+          pdfs_generated?: number | null
+          plan?: string
+          purchase_reference?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_pdf_count: {
+        Args: { user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

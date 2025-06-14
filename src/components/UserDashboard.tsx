@@ -43,7 +43,7 @@ const UserDashboard = ({ user, license }: UserDashboardProps) => {
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         
         const thisMonth = data.filter(
-          (item) => new Date(item.created_at) >= startOfMonth
+          (item) => item.created_at && new Date(item.created_at) >= startOfMonth
         ).length;
 
         setStats({

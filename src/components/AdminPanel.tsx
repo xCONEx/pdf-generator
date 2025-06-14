@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
@@ -131,7 +131,7 @@ const AdminPanel = () => {
         <div className="bg-white p-6 rounded-lg shadow">
           <h3 className="text-sm font-medium text-gray-500">Receita Total</h3>
           <p className="text-2xl font-bold text-green-600">
-            R$ {purchases.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}
+            R$ {purchases.reduce((sum, p) => sum + (p.amount || 0), 0).toFixed(2)}
           </p>
         </div>
       </div>
@@ -184,7 +184,7 @@ const AdminPanel = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    R$ {purchase.amount.toFixed(2)}
+                    R$ {(purchase.amount || 0).toFixed(2)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
