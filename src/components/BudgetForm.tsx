@@ -140,7 +140,14 @@ const BudgetForm = () => {
 
   const handleGeneratePDF = async () => {
     try {
-      await generatePDF(budgetData, selectedPremiumTemplate, advancedCustomization);
+      // Create enhanced budget data with premium features
+      const enhancedBudgetData = {
+        ...budgetData,
+        premiumTemplate: selectedPremiumTemplate,
+        advancedCustomization: advancedCustomization
+      };
+      
+      await generatePDF(enhancedBudgetData);
       toast({
         title: "PDF Gerado com Sucesso!",
         description: "Seu orçamento foi gerado e está sendo baixado.",

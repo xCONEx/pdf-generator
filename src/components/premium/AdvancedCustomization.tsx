@@ -54,7 +54,10 @@ const FONT_OPTIONS = [
 const AdvancedCustomization = ({ options, onOptionsChange }: AdvancedCustomizationProps) => {
   const [activeTab, setActiveTab] = useState<'colors' | 'typography' | 'layout' | 'watermark' | 'css'>('colors');
 
-  const updateOptions = (section: keyof AdvancedCustomizationOptions, updates: any) => {
+  const updateOptions = <K extends keyof AdvancedCustomizationOptions>(
+    section: K, 
+    updates: Partial<AdvancedCustomizationOptions[K]>
+  ) => {
     onOptionsChange({
       ...options,
       [section]: { ...options[section], ...updates }

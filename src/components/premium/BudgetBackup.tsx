@@ -7,13 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Crown, Search, Download, Trash2, Eye, Copy, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { BudgetData } from '@/types/budget';
+import { BudgetData, ServiceItem } from '@/types/budget';
 
 interface SavedBudget {
   id: string;
   client_name: string;
   total_value: number;
-  items: any[];
+  items: ServiceItem[];
   validity_days: number;
   discount: number;
   color_theme: string;
@@ -50,7 +50,13 @@ const BudgetBackup = ({ onLoadBudget }: BudgetBackupProps) => {
 
       if (error) throw error;
 
-      setSavedBudgets(data || []);
+      // Convert Json to ServiceItem[]
+      const convertedData = (data || []).map(budget => ({
+        ...budget,
+        items: Array.isArray(budget.items) ? budget.items as ServiceItem[] : []
+      }));
+
+      setSavedBudgets(convertedData);
     } catch (error) {
       console.error('Erro ao carregar orçamentos:', error);
       toast({
@@ -76,7 +82,7 @@ const BudgetBackup = ({ onLoadBudget }: BudgetBackupProps) => {
           user_id: user.id,
           client_name: budgetData.clientInfo.name,
           total_value: totalValue,
-          items: budgetData.items,
+          items: budgetData.items as any, // Cast to Json type
           validity_days: budgetData.validityDays,
           discount: budgetData.discount,
           color_theme: budgetData.colorTheme,

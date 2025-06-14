@@ -32,6 +32,8 @@ export interface BudgetData {
   colorTheme: string;
   validityDays: number;
   discount: number;
+  premiumTemplate?: any;
+  advancedCustomization?: any;
 }
 
 export const COLOR_THEMES = {
