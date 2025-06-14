@@ -50,10 +50,10 @@ const BudgetBackup = ({ onLoadBudget }: BudgetBackupProps) => {
 
       if (error) throw error;
 
-      // Convert Json to ServiceItem[]
+      // Convert Json to ServiceItem[] with proper type handling
       const convertedData = (data || []).map(budget => ({
         ...budget,
-        items: Array.isArray(budget.items) ? budget.items as ServiceItem[] : []
+        items: Array.isArray(budget.items) ? (budget.items as unknown as ServiceItem[]) : []
       }));
 
       setSavedBudgets(convertedData);
@@ -82,7 +82,7 @@ const BudgetBackup = ({ onLoadBudget }: BudgetBackupProps) => {
           user_id: user.id,
           client_name: budgetData.clientInfo.name,
           total_value: totalValue,
-          items: budgetData.items as any, // Cast to Json type
+          items: JSON.parse(JSON.stringify(budgetData.items)), // Proper Json conversion
           validity_days: budgetData.validityDays,
           discount: budgetData.discount,
           color_theme: budgetData.colorTheme,
@@ -173,7 +173,7 @@ const BudgetBackup = ({ onLoadBudget }: BudgetBackupProps) => {
           user_id: user.id,
           client_name: `${budget.client_name} (Cópia)`,
           total_value: budget.total_value,
-          items: budget.items,
+          items: JSON.parse(JSON.stringify(budget.items)), // Proper Json conversion
           validity_days: budget.validity_days,
           discount: budget.discount,
           color_theme: budget.color_theme,
@@ -365,7 +365,7 @@ const BudgetBackup = ({ onLoadBudget }: BudgetBackupProps) => {
                 <div>
                   <p className="text-sm text-gray-600 mb-2">Itens ({selectedBudget.items.length})</p>
                   <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {selectedBudget.items.map((item: any, index: number) => (
+                    {selectedBudget.items.map((item, index) => (
                       <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                         <div>
                           <p className="font-medium text-sm">{item.description}</p>

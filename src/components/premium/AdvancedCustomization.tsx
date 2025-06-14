@@ -60,7 +60,10 @@ const AdvancedCustomization = ({ options, onOptionsChange }: AdvancedCustomizati
   ) => {
     onOptionsChange({
       ...options,
-      [section]: { ...options[section], ...updates }
+      [section]: { 
+        ...(options[section] as object), 
+        ...updates 
+      } as AdvancedCustomizationOptions[K]
     });
   };
 
@@ -298,7 +301,7 @@ const AdvancedCustomization = ({ options, onOptionsChange }: AdvancedCustomizati
                   <Label>Posição</Label>
                   <select
                     value={options.watermark.position}
-                    onChange={(e) => updateOptions('watermark', { position: e.target.value })}
+                    onChange={(e) => updateOptions('watermark', { position: e.target.value as 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center' })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   >
                     <option value="top-left">Superior Esquerda</option>
@@ -322,7 +325,7 @@ const AdvancedCustomization = ({ options, onOptionsChange }: AdvancedCustomizati
             </p>
             <Textarea
               value={options.customCSS}
-              onChange={(e) => updateOptions('customCSS', e.target.value)}
+              onChange={(e) => onOptionsChange({ ...options, customCSS: e.target.value })}
               placeholder="/* Adicione seu CSS aqui */
 .header {
   background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
