@@ -1,20 +1,23 @@
 
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const AdminNavButton = () => {
-  const goToAdminPanel = () => {
-    window.location.reload();
+  const navigate = useNavigate();
+
+  const goToMainApp = () => {
+    navigate('/');
   };
 
   return (
     <Button
-      onClick={goToAdminPanel}
+      onClick={goToMainApp}
       variant="outline"
       size="sm"
       className="flex items-center space-x-2"
     >
-      <span>Painel Admin</span>
+      <span>Ir para PDF</span>
       <ArrowRight size={16} />
     </Button>
   );

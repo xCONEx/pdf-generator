@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -21,12 +20,12 @@ const AddMemberForm = ({ onClose, onSuccess }: AddMemberFormProps) => {
     setLoading(true);
 
     try {
-      // Verificar se o email já existe
+      // Verificar se já existe uma licença para este email
       const { data: existingLicense } = await supabase
         .from('user_licenses')
         .select('id')
         .eq('email', email)
-        .single();
+        .maybeSingle();
 
       if (existingLicense) {
         toast({
@@ -34,22 +33,27 @@ const AddMemberForm = ({ onClose, onSuccess }: AddMemberFormProps) => {
           description: 'Este email já possui uma licença',
           variant: 'destructive',
         });
+        setLoading(false);
         return;
       }
 
-      // Criar nova licença
+      // Criar nova licença sem user_id (apenas com email para licenças administrativas)
       const { error } = await supabase
         .from('user_licenses')
         .insert({
           email,
+          user_id: null, // Permite null para licenças criadas administrativamente
           plan,
           status: 'active',
-          expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 ano
+          expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
           pdf_limit: plan === 'premium' ? 100 : 10,
           pdfs_generated: 0,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro detalhado:', error);
+        throw error;
+      }
 
       toast({
         title: 'Sucesso',
@@ -61,7 +65,7 @@ const AddMemberForm = ({ onClose, onSuccess }: AddMemberFormProps) => {
       console.error('Erro ao adicionar membro:', error);
       toast({
         title: 'Erro',
-        description: 'Erro ao adicionar membro',
+        description: 'Erro ao adicionar membro. Verifique as permissões.',
         variant: 'destructive',
       });
     } finally {

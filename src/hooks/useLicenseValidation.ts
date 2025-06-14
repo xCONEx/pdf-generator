@@ -5,7 +5,8 @@ import { useToast } from '@/hooks/use-toast';
 
 interface UserLicense {
   id: string;
-  user_id: string;
+  user_id: string | null;
+  email: string | null;
   plan: 'basic' | 'premium';
   status: 'active' | 'expired' | 'suspended';
   expires_at: string;
@@ -32,11 +33,12 @@ export const useLicenseValidation = () => {
           return;
         }
 
+        // Buscar licença por user_id ou por email
         const { data, error } = await supabase
           .from('user_licenses')
           .select('*')
-          .eq('user_id', user.id)
-          .single();
+          .or(`user_id.eq.${user.id},email.eq.${user.email}`)
+          .maybeSingle();
 
         if (!isMounted) return;
 
@@ -58,7 +60,17 @@ export const useLicenseValidation = () => {
             });
           }
           
-          // Cast the database result to our expected types
+          // Se a licença foi encontrada por email mas não tem user_id, atualizar
+          if (data.email === user.email && !data.user_id) {
+            await supabase
+              .from('user_licenses')
+              .update({ user_id: user.id })
+              .eq('id', data.id);
+            
+            // Atualizar o objeto local também
+            data.user_id = user.id;
+          }
+          
           const typedLicense: UserLicense = {
             ...data,
             plan: data.plan as 'basic' | 'premium',
@@ -80,7 +92,6 @@ export const useLicenseValidation = () => {
 
     validateLicense();
 
-    // Validar licença a cada 5 minutos apenas se o componente ainda estiver montado
     const interval = setInterval(() => {
       if (isMounted) {
         validateLicense();
