@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Upload, Download, Save, Users, Crown, BarChart3, FileText } from 'lucide-react';
+import { Plus, Trash2, Upload, Download, Save, Users, Crown, BarChart3, FileText, X } from 'lucide-react';
 import { BudgetData, ServiceItem, COLOR_THEMES, CompanyInfo, ClientInfo } from '@/types/budget';
 import { generatePDF } from '@/utils/pdfGenerator';
 import { toast } from '@/hooks/use-toast';
@@ -51,6 +51,7 @@ const BudgetForm = () => {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [selectedPremiumTemplate, setSelectedPremiumTemplate] = useState<PremiumTemplate | null>(null);
   const [advancedCustomization, setAdvancedCustomization] = useState<AdvancedCustomizationOptions | null>(null);
+  const [isHoveringLogo, setIsHoveringLogo] = useState(false);
 
   // Carregar dados da empresa quando disponível
   useEffect(() => {
@@ -100,6 +101,18 @@ const BudgetForm = () => {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleRemoveLogo = () => {
+    setLogoPreview('');
+    setBudgetData(prev => ({
+      ...prev,
+      companyInfo: { ...prev.companyInfo, logo: undefined, logoUrl: '' }
+    }));
+    toast({
+      title: "Logo Removido",
+      description: "O logo foi removido com sucesso.",
+    });
   };
 
   const addItem = () => {
@@ -355,15 +368,36 @@ const BudgetForm = () => {
                     />
                     <label
                       htmlFor="logo-upload"
-                      className="flex items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 transition-colors"
+                      className="flex items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 transition-colors relative"
+                      onMouseEnter={() => setIsHoveringLogo(true)}
+                      onMouseLeave={() => setIsHoveringLogo(false)}
                     >
                       {logoPreview ? (
-                        <img 
-                          src={logoPreview} 
-                          alt="Logo" 
-                          className="max-h-28 max-w-full object-contain"
-                          style={{ maxWidth: '200px', maxHeight: '112px' }}
-                        />
+                        <div className="relative">
+                          <img 
+                            src={logoPreview} 
+                            alt="Logo" 
+                            className="max-h-28 max-w-full object-contain"
+                            style={{ maxWidth: '200px', maxHeight: '112px' }}
+                          />
+                          {isHoveringLogo && (
+                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded">
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleRemoveLogo();
+                                }}
+                                className="flex items-center gap-1"
+                              >
+                                <X className="w-4 h-4" />
+                                Remover
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                       ) : (
                         <div className="text-center">
                           <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
