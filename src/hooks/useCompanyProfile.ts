@@ -65,46 +65,28 @@ export const useCompanyProfile = () => {
 
       console.log('Salvando dados da empresa:', companyInfo);
 
-      // Verificar se já existe um perfil para esse usuário
-      const { data: existingProfile } = await supabase
-        .from('company_profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
       const profileData = {
+        user_id: user.id,
         name: companyInfo.name,
         email: companyInfo.email,
         phone: companyInfo.phone,
         address: companyInfo.address,
         logo_url: companyInfo.logoUrl,
+        created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
 
-      let result;
+      // Use upsert with the unique constraint on user_id
+      const { error } = await supabase
+        .from('company_profiles')
+        .upsert(profileData, { 
+          onConflict: 'user_id',
+          ignoreDuplicates: false 
+        });
 
-      if (existingProfile) {
-        // Atualizar perfil existente usando o user_id
-        console.log('Atualizando perfil existente para usuário:', user.id);
-        result = await supabase
-          .from('company_profiles')
-          .update(profileData)
-          .eq('user_id', user.id);
-      } else {
-        // Criar novo perfil
-        console.log('Criando novo perfil para o usuário:', user.id);
-        result = await supabase
-          .from('company_profiles')
-          .insert([{
-            user_id: user.id,
-            ...profileData,
-            created_at: new Date().toISOString()
-          }]);
-      }
-
-      if (result.error) {
-        console.error('Erro detalhado ao salvar:', result.error);
-        throw result.error;
+      if (error) {
+        console.error('Erro detalhado ao salvar:', error);
+        throw error;
       }
 
       console.log('Perfil salvo com sucesso');
