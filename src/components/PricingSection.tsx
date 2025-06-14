@@ -7,7 +7,7 @@ const PricingSection = () => {
   const plans = [
     {
       name: 'Básico',
-      price: 'R$ 29',
+      price: 'R$ 19,90',
       period: '/mês',
       description: 'Ideal para freelancers e pequenos negócios',
       features: [
@@ -21,7 +21,7 @@ const PricingSection = () => {
     },
     {
       name: 'Profissional',
-      price: 'R$ 59',
+      price: 'R$ 39,90',
       period: '/mês',
       description: 'Perfeito para empresas em crescimento',
       features: [
@@ -37,7 +37,7 @@ const PricingSection = () => {
     },
     {
       name: 'Empresarial',
-      price: 'R$ 99',
+      price: 'R$ 59,90',
       period: '/mês',
       description: 'Para grandes empresas e equipes',
       features: [
@@ -45,9 +45,8 @@ const PricingSection = () => {
         'Templates premium',
         'Suporte 24/7',
         'Personalização avançada',
-        'API de integração',
         'Relatórios analytics',
-        'Equipe ilimitada'
+        'Backup de orçamentos para buscar'
       ],
       link: 'https://pay.cakto.com.br/3b6s5eo',
       popular: false
