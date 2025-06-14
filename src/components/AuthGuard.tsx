@@ -20,7 +20,7 @@ interface UserLicense {
   created_at: string;
 }
 
-const ADMIN_EMAIL = 'adm.financeflow@gmail.com';
+const ADMIN_EMAILS = ['adm.financeflow@gmail.com', 'yuriadrskt@gmail.com'];
 
 const AuthGuard = ({ children }: AuthGuardProps) => {
   const [user, setUser] = useState<User | null>(null);
@@ -95,7 +95,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
   }
 
   // Verificar se é admin
-  if (user.email === ADMIN_EMAIL) {
+  if (user.email && ADMIN_EMAILS.includes(user.email)) {
     return <AdminPanel />;
   }
 
