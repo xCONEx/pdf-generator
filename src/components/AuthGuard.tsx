@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import LoginForm from './LoginForm';
+import AdminPanel from './AdminPanel';
 import { User } from '@supabase/supabase-js';
 
 interface AuthGuardProps {
@@ -18,6 +19,8 @@ interface UserLicense {
   pdf_limit: number;
   created_at: string;
 }
+
+const ADMIN_EMAIL = 'adm.financeflow@gmail.com';
 
 const AuthGuard = ({ children }: AuthGuardProps) => {
   const [user, setUser] = useState<User | null>(null);
@@ -83,6 +86,11 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
 
   if (!user) {
     return <LoginForm />;
+  }
+
+  // Verificar se é admin
+  if (user.email === ADMIN_EMAIL) {
+    return <AdminPanel />;
   }
 
   if (!license || license.status !== 'active') {
