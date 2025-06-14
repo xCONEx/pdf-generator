@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check } from 'lucide-react';
@@ -45,7 +46,8 @@ const PricingSection = () => {
         'Suporte 24/7',
         'Personalização avançada',
         'Relatórios analytics',
-        'Backup de orçamentos para buscar'
+        'Backup de orçamentos para buscar',
+        'Dados salvos automaticamente'
       ],
       link: 'https://pay.cakto.com.br/3b6s5eo',
       popular: false

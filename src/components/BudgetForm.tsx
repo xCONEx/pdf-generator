@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Upload, Download } from 'lucide-react';
-import { BudgetData, ServiceItem, COLOR_THEMES } from '@/types/budget';
+import { Plus, Trash2, Upload, Download, Save, Users } from 'lucide-react';
+import { BudgetData, ServiceItem, COLOR_THEMES, CompanyInfo, ClientInfo } from '@/types/budget';
 import { generatePDF } from '@/utils/pdfGenerator';
 import { toast } from '@/hooks/use-toast';
+import AdminNavButton from './AdminNavButton';
 
 const BudgetForm = () => {
   const [budgetData, setBudgetData] = useState<BudgetData>({
@@ -32,6 +33,64 @@ const BudgetForm = () => {
   });
 
   const [logoPreview, setLogoPreview] = useState<string>('');
+  const [savedClients, setSavedClients] = useState<ClientInfo[]>([]);
+  const [showClientModal, setShowClientModal] = useState(false);
+
+  // Carregar dados salvos ao inicializar
+  useEffect(() => {
+    const savedCompanyData = localStorage.getItem('companyInfo');
+    const savedClientsData = localStorage.getItem('savedClients');
+    
+    if (savedCompanyData) {
+      const companyInfo = JSON.parse(savedCompanyData);
+      setBudgetData(prev => ({ ...prev, companyInfo }));
+      if (companyInfo.logoUrl) {
+        setLogoPreview(companyInfo.logoUrl);
+      }
+    }
+    
+    if (savedClientsData) {
+      setSavedClients(JSON.parse(savedClientsData));
+    }
+  }, []);
+
+  const saveCompanyData = () => {
+    localStorage.setItem('companyInfo', JSON.stringify(budgetData.companyInfo));
+    toast({
+      title: "Dados Salvos!",
+      description: "Informações da empresa foram salvas com sucesso.",
+    });
+  };
+
+  const saveClient = () => {
+    const newClient = { ...budgetData.clientInfo };
+    const updatedClients = [...savedClients, newClient];
+    setSavedClients(updatedClients);
+    localStorage.setItem('savedClients', JSON.stringify(updatedClients));
+    toast({
+      title: "Cliente Salvo!",
+      description: "Informações do cliente foram salvas para reutilização.",
+    });
+  };
+
+  const loadClient = (client: ClientInfo) => {
+    setBudgetData(prev => ({ ...prev, clientInfo: client }));
+    setShowClientModal(false);
+    toast({
+      title: "Cliente Carregado!",
+      description: "Dados do cliente foram carregados no formulário.",
+    });
+  };
+
+  const deleteClient = (index: number) => {
+    const updatedClients = savedClients.filter((_, i) => i !== index);
+    setSavedClients(updatedClients);
+    localStorage.setItem('savedClients', JSON.stringify(updatedClients));
+    toast({
+      title: "Cliente Removido!",
+      description: "Cliente foi removido da lista salva.",
+    });
+  };
 
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -110,11 +169,14 @@ const BudgetForm = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4">
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className={`text-4xl font-bold bg-gradient-to-r ${currentTheme.gradient} bg-clip-text text-transparent mb-2`}>
-            Gerador de Orçamentos
-          </h1>
-          <p className="text-gray-600">Crie orçamentos profissionais e personalizados em PDF</p>
+        <div className="flex justify-between items-center mb-8">
+          <div className="text-center flex-1">
+            <h1 className={`text-4xl font-bold bg-gradient-to-r ${currentTheme.gradient} bg-clip-text text-transparent mb-2`}>
+              Gerador de Orçamentos
+            </h1>
+            <p className="text-gray-600">Crie orçamentos profissionais e personalizados em PDF</p>
+          </div>
+          <AdminNavButton />
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
@@ -123,9 +185,15 @@ const BudgetForm = () => {
             {/* Informações da Empresa */}
             <Card className="shadow-lg">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2" style={{ color: currentTheme.primary }}>
-                  <Upload className="w-5 h-5" />
-                  Dados da Empresa
+                <CardTitle className="flex items-center justify-between" style={{ color: currentTheme.primary }}>
+                  <div className="flex items-center gap-2">
+                    <Upload className="w-5 h-5" />
+                    Dados da Empresa
+                  </div>
+                  <Button onClick={saveCompanyData} size="sm" variant="outline">
+                    <Save className="w-4 h-4 mr-1" />
+                    Salvar
+                  </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -237,7 +305,19 @@ const BudgetForm = () => {
             {/* Dados do Cliente */}
             <Card className="shadow-lg">
               <CardHeader>
-                <CardTitle style={{ color: currentTheme.primary }}>Dados do Cliente</CardTitle>
+                <CardTitle className="flex items-center justify-between" style={{ color: currentTheme.primary }}>
+                  Dados do Cliente
+                  <div className="flex gap-2">
+                    <Button onClick={() => setShowClientModal(true)} size="sm" variant="outline">
+                      <Users className="w-4 h-4 mr-1" />
+                      Carregar
+                    </Button>
+                    <Button onClick={saveClient} size="sm" variant="outline">
+                      <Save className="w-4 h-4 mr-1" />
+                      Salvar
+                    </Button>
+                  </div>
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -446,6 +526,44 @@ const BudgetForm = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de Clientes Salvos */}
+      {showClientModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto">
+            <div className="p-6">
+              <h3 className="text-xl font-bold mb-4">Clientes Salvos</h3>
+              {savedClients.length === 0 ? (
+                <p className="text-gray-500">Nenhum cliente salvo ainda.</p>
+              ) : (
+                <div className="space-y-3">
+                  {savedClients.map((client, index) => (
+                    <div key={index} className="border rounded-lg p-4 flex justify-between items-center">
+                      <div>
+                        <p className="font-medium">{client.name}</p>
+                        <p className="text-sm text-gray-500">{client.email}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button onClick={() => loadClient(client)} size="sm">
+                          Carregar
+                        </Button>
+                        <Button onClick={() => deleteClient(index)} size="sm" variant="outline" className="text-red-500">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="mt-6 flex justify-end">
+                <Button onClick={() => setShowClientModal(false)} variant="outline">
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
