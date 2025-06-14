@@ -244,14 +244,7 @@ const BudgetForm = () => {
     setShowPremiumFeatures(false);
   };
 
-  // Determinar qual tema usar baseado nos templates selecionados
-  const currentTheme = selectedExclusiveTemplate 
-    ? selectedExclusiveTemplate.colorScheme
-    : selectedPremiumTemplate 
-      ? selectedPremiumTemplate.colorScheme 
-      : COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES];
-
-  // Função para obter gradient com fallback - corrigida
+  // Função para obter gradient com fallback
   const getThemeGradient = () => {
     if (selectedExclusiveTemplate) {
       return selectedExclusiveTemplate.colorScheme.gradient;
@@ -272,6 +265,13 @@ const BudgetForm = () => {
         return 'from-blue-500 to-blue-600';
     }
   };
+
+  // Determinar qual tema usar baseado nos templates selecionados
+  const currentTheme = selectedExclusiveTemplate 
+    ? selectedExclusiveTemplate.colorScheme
+    : selectedPremiumTemplate 
+      ? selectedPremiumTemplate.colorScheme 
+      : COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES];
 
   if (loadingCompany || loadingClients) {
     return (
@@ -403,7 +403,7 @@ const BudgetForm = () => {
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="w-5 h-5" />
                   Analytics Avançados
-                  <Crown className="w-5 h-5 text-yellow-500" />
+                  <Crown className="w-5 h-4 text-yellow-500" />
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -548,7 +548,7 @@ const BudgetForm = () => {
               </CardContent>
             </Card>
 
-            {/* Tema de Cores */}
+            {/* Tema de Cores - CORRIGIDO PARA APARECER SEMPRE */}
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle style={{ color: currentTheme.primary }}>Escolha o Tema</CardTitle>
