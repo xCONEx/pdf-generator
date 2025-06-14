@@ -1,8 +1,9 @@
-
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { ArrowRight, ArrowLeft, Plus } from 'lucide-react';
+import AddMemberForm from './AddMemberForm';
 
 interface Purchase {
   id: string;
@@ -28,6 +29,7 @@ const AdminPanel = () => {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [licenses, setLicenses] = useState<UserLicense[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAddMember, setShowAddMember] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -91,6 +93,10 @@ const AdminPanel = () => {
     }
   };
 
+  const goToPdfGenerator = () => {
+    window.location.href = '/';
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -101,14 +107,44 @@ const AdminPanel = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Painel Administrativo
-        </h1>
-        <p className="text-gray-600">
-          Gerenciamento de compras e licenças do sistema
-        </p>
+      <div className="mb-8 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Painel Administrativo
+          </h1>
+          <p className="text-gray-600">
+            Gerenciamento de compras e licenças do sistema
+          </p>
+        </div>
+        <div className="flex space-x-3">
+          <Button
+            onClick={() => setShowAddMember(true)}
+            className="flex items-center space-x-2"
+          >
+            <Plus size={16} />
+            <span>Adicionar Membro</span>
+          </Button>
+          <Button
+            onClick={goToPdfGenerator}
+            variant="outline"
+            className="flex items-center space-x-2"
+          >
+            <ArrowLeft size={16} />
+            <span>Ir para Gerador de PDF</span>
+          </Button>
+        </div>
       </div>
+
+      {/* Modal para adicionar membro */}
+      {showAddMember && (
+        <AddMemberForm
+          onClose={() => setShowAddMember(false)}
+          onSuccess={() => {
+            setShowAddMember(false);
+            loadAdminData();
+          }}
+        />
+      )}
 
       {/* Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
