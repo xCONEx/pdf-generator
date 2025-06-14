@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import LoginForm from './LoginForm';
 import AdminPanel from './AdminPanel';
+import AdminNavButton from './AdminNavButton';
 import { User } from '@supabase/supabase-js';
 
 interface AuthGuardProps {
@@ -14,6 +15,7 @@ const ADMIN_EMAILS = ['adm.financeflow@gmail.com', 'yuriadrskt@gmail.com'];
 const AuthGuard = ({ children }: AuthGuardProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
 
   useEffect(() => {
     // Verificar sessão atual
@@ -45,12 +47,27 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     return <LoginForm />;
   }
 
-  // Verificar se é admin - se for, mostrar painel admin
-  if (user.email && ADMIN_EMAILS.includes(user.email)) {
+  // Verificar se é admin
+  const isAdmin = user.email && ADMIN_EMAILS.includes(user.email);
+
+  // Se é admin e quer ver o painel admin
+  if (isAdmin && showAdminPanel) {
     return <AdminPanel />;
   }
 
-  // Para usuários não-admin, renderizar os children (que incluem a verificação de licença)
+  // Se é admin mas não está no painel admin, mostrar o gerador com botão para admin
+  if (isAdmin) {
+    return (
+      <div>
+        <div className="fixed top-4 right-4 z-50">
+          <AdminNavButton onAdminPanel={() => setShowAdminPanel(true)} />
+        </div>
+        {children}
+      </div>
+    );
+  }
+
+  // Para usuários não-admin, renderizar os children normalmente
   return <>{children}</>;
 };
 

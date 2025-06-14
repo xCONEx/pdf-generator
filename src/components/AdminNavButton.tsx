@@ -1,18 +1,17 @@
 
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { ExternalLink, FileText } from 'lucide-react';
+import { ExternalLink, Settings } from 'lucide-react';
 
-const AdminNavButton = () => {
+interface AdminNavButtonProps {
+  onAdminPanel?: () => void;
+}
+
+const AdminNavButton = ({ onAdminPanel }: AdminNavButtonProps) => {
   const navigate = useNavigate();
 
   const goToSalesPage = () => {
     navigate('/vendas');
-  };
-
-  const goToPdfGenerator = () => {
-    // Abrir em nova aba para não perder o contexto admin
-    window.open('/', '_blank');
   };
 
   return (
@@ -26,15 +25,17 @@ const AdminNavButton = () => {
         <ExternalLink size={16} />
         <span>Página de Vendas</span>
       </Button>
-      <Button
-        variant="default"
-        size="sm"
-        onClick={goToPdfGenerator}
-        className="flex items-center space-x-2"
-      >
-        <FileText size={16} />
-        <span>Gerador de PDF</span>
-      </Button>
+      {onAdminPanel && (
+        <Button
+          variant="default"
+          size="sm"
+          onClick={onAdminPanel}
+          className="flex items-center space-x-2"
+        >
+          <Settings size={16} />
+          <span>Painel Admin</span>
+        </Button>
+      )}
     </div>
   );
 };

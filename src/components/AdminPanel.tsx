@@ -109,8 +109,8 @@ const AdminPanel = () => {
   };
 
   const goToPdfGenerator = () => {
-    // Abrir em nova aba para manter o painel admin aberto
-    window.open('/', '_blank');
+    // Recarregar a página para voltar ao gerador
+    window.location.href = '/';
   };
 
   const goToSalesPage = () => {
@@ -154,11 +154,11 @@ const AdminPanel = () => {
           </Button>
           <Button
             onClick={goToPdfGenerator}
-            variant="default"
+            variant="secondary"
             className="flex items-center space-x-2"
           >
             <FileText size={16} />
-            <span>Gerador de PDF</span>
+            <span>Voltar ao Gerador</span>
           </Button>
         </div>
       </div>
