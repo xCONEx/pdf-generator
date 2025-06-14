@@ -1,7 +1,7 @@
 
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, FileText } from 'lucide-react';
 
 const AdminNavButton = () => {
   const navigate = useNavigate();
@@ -11,7 +11,8 @@ const AdminNavButton = () => {
   };
 
   const goToPdfGenerator = () => {
-    navigate('/');
+    // Abrir em nova aba para não perder o contexto admin
+    window.open('/', '_blank');
   };
 
   return (
@@ -31,6 +32,7 @@ const AdminNavButton = () => {
         onClick={goToPdfGenerator}
         className="flex items-center space-x-2"
       >
+        <FileText size={16} />
         <span>Gerador de PDF</span>
       </Button>
     </div>

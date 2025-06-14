@@ -28,6 +28,8 @@ const App = () => (
               <Index />
             </AuthGuard>
           } />
+          
+          {/* Página 404 para rotas não encontradas */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

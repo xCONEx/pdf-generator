@@ -109,7 +109,8 @@ const AdminPanel = () => {
   };
 
   const goToPdfGenerator = () => {
-    window.location.href = '/';
+    // Abrir em nova aba para manter o painel admin aberto
+    window.open('/', '_blank');
   };
 
   const goToSalesPage = () => {
