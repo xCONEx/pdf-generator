@@ -9,8 +9,13 @@ import { BudgetData, ServiceItem, COLOR_THEMES, CompanyInfo, ClientInfo } from '
 import { generatePDF } from '@/utils/pdfGenerator';
 import { toast } from '@/hooks/use-toast';
 import AdminNavButton from './AdminNavButton';
+import { useCompanyProfile } from '@/hooks/useCompanyProfile';
+import { useSavedClients } from '@/hooks/useSavedClients';
 
 const BudgetForm = () => {
+  const { companyProfile, loading: loadingCompany, saveCompanyProfile } = useCompanyProfile();
+  const { savedClients, loading: loadingClients, saveClient, deleteClient } = useSavedClients();
+  
   const [budgetData, setBudgetData] = useState<BudgetData>({
     companyInfo: {
       name: '',
@@ -33,44 +38,27 @@ const BudgetForm = () => {
   });
 
   const [logoPreview, setLogoPreview] = useState<string>('');
-  const [savedClients, setSavedClients] = useState<ClientInfo[]>([]);
   const [showClientModal, setShowClientModal] = useState(false);
 
-  // Carregar dados salvos ao inicializar
+  // Carregar dados da empresa quando disponível
   useEffect(() => {
-    const savedCompanyData = localStorage.getItem('companyInfo');
-    const savedClientsData = localStorage.getItem('savedClients');
-    
-    if (savedCompanyData) {
-      const companyInfo = JSON.parse(savedCompanyData);
-      setBudgetData(prev => ({ ...prev, companyInfo }));
-      if (companyInfo.logoUrl) {
-        setLogoPreview(companyInfo.logoUrl);
+    if (companyProfile) {
+      setBudgetData(prev => ({ 
+        ...prev, 
+        companyInfo: companyProfile 
+      }));
+      if (companyProfile.logoUrl) {
+        setLogoPreview(companyProfile.logoUrl);
       }
     }
-    
-    if (savedClientsData) {
-      setSavedClients(JSON.parse(savedClientsData));
-    }
-  }, []);
+  }, [companyProfile]);
 
-  const saveCompanyData = () => {
-    localStorage.setItem('companyInfo', JSON.stringify(budgetData.companyInfo));
-    toast({
-      title: "Dados Salvos!",
-      description: "Informações da empresa foram salvas com sucesso.",
-    });
+  const handleSaveCompanyData = () => {
+    saveCompanyProfile(budgetData.companyInfo);
   };
 
-  const saveClient = () => {
-    const newClient = { ...budgetData.clientInfo };
-    const updatedClients = [...savedClients, newClient];
-    setSavedClients(updatedClients);
-    localStorage.setItem('savedClients', JSON.stringify(updatedClients));
-    toast({
-      title: "Cliente Salvo!",
-      description: "Informações do cliente foram salvas para reutilização.",
-    });
+  const handleSaveClient = () => {
+    saveClient(budgetData.clientInfo);
   };
 
   const loadClient = (client: ClientInfo) => {
@@ -82,14 +70,8 @@ const BudgetForm = () => {
     });
   };
 
-  const deleteClient = (index: number) => {
-    const updatedClients = savedClients.filter((_, i) => i !== index);
-    setSavedClients(updatedClients);
-    localStorage.setItem('savedClients', JSON.stringify(updatedClients));
-    toast({
-      title: "Cliente Removido!",
-      description: "Cliente foi removido da lista salva.",
-    });
+  const handleDeleteClient = (client: ClientInfo) => {
+    deleteClient(client);
   };
 
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -166,6 +148,14 @@ const BudgetForm = () => {
 
   const currentTheme = COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES];
 
+  if (loadingCompany || loadingClients) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4">
       <div className="max-w-6xl mx-auto">
@@ -190,13 +180,14 @@ const BudgetForm = () => {
                     <Upload className="w-5 h-5" />
                     Dados da Empresa
                   </div>
-                  <Button onClick={saveCompanyData} size="sm" variant="outline">
+                  <Button onClick={handleSaveCompanyData} size="sm" variant="outline">
                     <Save className="w-4 h-4 mr-1" />
                     Salvar
                   </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Logo upload */}
                 <div>
                   <Label>Logo da Empresa</Label>
                   <div className="mt-2">
@@ -312,7 +303,7 @@ const BudgetForm = () => {
                       <Users className="w-4 h-4 mr-1" />
                       Carregar
                     </Button>
-                    <Button onClick={saveClient} size="sm" variant="outline">
+                    <Button onClick={handleSaveClient} size="sm" variant="outline">
                       <Save className="w-4 h-4 mr-1" />
                       Salvar
                     </Button>
@@ -320,6 +311,7 @@ const BudgetForm = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Client form fields */}
                 <div>
                   <Label>Nome do Cliente</Label>
                   <Input
@@ -547,7 +539,7 @@ const BudgetForm = () => {
                         <Button onClick={() => loadClient(client)} size="sm">
                           Carregar
                         </Button>
-                        <Button onClick={() => deleteClient(index)} size="sm" variant="outline" className="text-red-500">
+                        <Button onClick={() => handleDeleteClient(client)} size="sm" variant="outline" className="text-red-500">
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>

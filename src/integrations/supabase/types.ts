@@ -9,6 +9,42 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      company_profiles: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pdf_generations: {
         Row: {
           client_name: string
@@ -78,6 +114,84 @@ export type Database = {
           processed?: boolean | null
           product_name?: string
           webhook_data?: Json | null
+        }
+        Relationships: []
+      }
+      saved_budgets: {
+        Row: {
+          client_name: string
+          color_theme: string | null
+          created_at: string
+          discount: number | null
+          id: string
+          items: Json
+          observations: string | null
+          special_conditions: string | null
+          total_value: number
+          updated_at: string
+          user_id: string
+          validity_days: number | null
+        }
+        Insert: {
+          client_name: string
+          color_theme?: string | null
+          created_at?: string
+          discount?: number | null
+          id?: string
+          items: Json
+          observations?: string | null
+          special_conditions?: string | null
+          total_value: number
+          updated_at?: string
+          user_id: string
+          validity_days?: number | null
+        }
+        Update: {
+          client_name?: string
+          color_theme?: string | null
+          created_at?: string
+          discount?: number | null
+          id?: string
+          items?: Json
+          observations?: string | null
+          special_conditions?: string | null
+          total_value?: number
+          updated_at?: string
+          user_id?: string
+          validity_days?: number | null
+        }
+        Relationships: []
+      }
+      saved_clients: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
