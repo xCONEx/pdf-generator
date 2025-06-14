@@ -1,19 +1,11 @@
 
-import SalesHeader from '@/components/SalesHeader';
-import SalesFooter from '@/components/SalesFooter';
-import PricingSection from '@/components/PricingSection';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check, Star, ArrowRight, FileText, Palette, Calculator, Download, Users, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
 
 const SalesPage = () => {
   const navigate = useNavigate();
-
-  useEffect(() => {
-    console.log('SalesPage component mounted');
-  }, []);
 
   const goToApp = () => {
     navigate('/');
@@ -52,6 +44,56 @@ const SalesPage = () => {
     }
   ];
 
+  const plans = [
+    {
+      name: 'Básico',
+      price: 'R$ 19,90',
+      period: '/mês',
+      description: 'Ideal para freelancers e pequenos negócios',
+      features: [
+        '10 PDFs por mês',
+        'Templates básicos',
+        'Suporte por email',
+        'Personalização limitada'
+      ],
+      link: 'https://pay.cakto.com.br/33chw64',
+      popular: false
+    },
+    {
+      name: 'Profissional',
+      price: 'R$ 39,90',
+      period: '/mês',
+      description: 'Perfeito para empresas em crescimento',
+      features: [
+        '50 PDFs por mês',
+        'Todos os templates',
+        'Suporte prioritário',
+        'Personalização completa',
+        'Logo da empresa',
+        'Múltiplos temas'
+      ],
+      link: 'https://pay.cakto.com.br/c4jwped',
+      popular: true
+    },
+    {
+      name: 'Empresarial',
+      price: 'R$ 59,90',
+      period: '/mês',
+      description: 'Para grandes empresas e equipes',
+      features: [
+        'PDFs ilimitados',
+        'Templates premium',
+        'Suporte 24/7',
+        'Personalização avançada',
+        'Relatórios analytics',
+        'Backup de orçamentos para buscar',
+        'Dados salvos automaticamente'
+      ],
+      link: 'https://pay.cakto.com.br/3b6s5eo',
+      popular: false
+    }
+  ];
+
   const testimonials = [
     {
       name: 'Maria Silva',
@@ -75,7 +117,40 @@ const SalesPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <SalesHeader />
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">GF</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">Gerador de Orçamentos</span>
+            </div>
+            
+            <nav className="hidden md:flex items-center space-x-8">
+              <a href="#recursos" className="text-gray-600 hover:text-gray-900">Recursos</a>
+              <a href="#planos" className="text-gray-600 hover:text-gray-900">Planos</a>
+              <a href="#depoimentos" className="text-gray-600 hover:text-gray-900">Depoimentos</a>
+            </nav>
+
+            <div className="flex items-center space-x-4">
+              <Button 
+                variant="ghost" 
+                onClick={goToApp}
+              >
+                Entrar
+              </Button>
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={goToApp}
+              >
+                Começar Grátis
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
       
       {/* Hero Section */}
       <section className="py-20 px-4">
@@ -110,7 +185,7 @@ const SalesPage = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 px-4 bg-white">
+      <section id="recursos" className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-4xl font-bold text-center text-gray-900 mb-12">
             Recursos Poderosos para Seu Negócio
@@ -188,10 +263,73 @@ const SalesPage = () => {
       </section>
 
       {/* Pricing Section */}
-      <PricingSection />
+      <section id="planos" className="py-16 px-4 bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Escolha o plano ideal para você
+            </h2>
+            <p className="text-xl text-gray-600">
+              Preços transparentes sem surpresas. Cancele quando quiser.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {plans.map((plan, index) => (
+              <Card 
+                key={index} 
+                className={`relative border-2 shadow-lg hover:shadow-xl transition-shadow ${
+                  plan.popular ? 'border-blue-500 scale-105' : 'border-gray-200'
+                }`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+                      Mais Popular
+                    </span>
+                  </div>
+                )}
+                
+                <CardHeader className="text-center pb-4">
+                  <CardTitle className="text-2xl font-bold text-gray-900">
+                    {plan.name}
+                  </CardTitle>
+                  <div className="mt-2">
+                    <span className="text-4xl font-bold text-gray-900">{plan.price}</span>
+                    <span className="text-gray-600">{plan.period}</span>
+                  </div>
+                  <p className="text-gray-600 mt-2">{plan.description}</p>
+                </CardHeader>
+                
+                <CardContent className="pt-0">
+                  <ul className="space-y-3 mb-6">
+                    {plan.features.map((feature, featureIndex) => (
+                      <li key={featureIndex} className="flex items-center space-x-3">
+                        <Check className="text-green-500 flex-shrink-0" size={16} />
+                        <span className="text-gray-600">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  
+                  <Button 
+                    className={`w-full ${
+                      plan.popular 
+                        ? 'bg-blue-600 hover:bg-blue-700' 
+                        : 'bg-gray-900 hover:bg-gray-800'
+                    }`}
+                    onClick={() => window.open(plan.link, '_blank')}
+                  >
+                    Escolher {plan.name}
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Testimonials Section */}
-      <section className="py-16 px-4 bg-white">
+      <section id="depoimentos" className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-4xl font-bold text-center text-gray-900 mb-12">
             O que nossos clientes dizem
@@ -284,7 +422,58 @@ const SalesPage = () => {
         </div>
       </section>
 
-      <SalesFooter />
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">GF</span>
+                </div>
+                <span className="text-xl font-bold">Gerador de Orçamentos</span>
+              </div>
+              <p className="text-gray-400">
+                A solução completa para criação de orçamentos profissionais.
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-4">Produto</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#recursos" className="hover:text-white">Recursos</a></li>
+                <li><a href="#planos" className="hover:text-white">Planos</a></li>
+                <li><a href="#" className="hover:text-white">Demonstração</a></li>
+                <li><a href="#" className="hover:text-white">API</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-4">Suporte</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white">Central de Ajuda</a></li>
+                <li><a href="#" className="hover:text-white">Documentação</a></li>
+                <li><a href="#" className="hover:text-white">Contato</a></li>
+                <li><a href="#" className="hover:text-white">Status</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-4">Empresa</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white">Sobre</a></li>
+                <li><a href="#" className="hover:text-white">Blog</a></li>
+                <li><a href="#" className="hover:text-white">Carreiras</a></li>
+                <li><a href="#" className="hover:text-white">Privacidade</a></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>&copy; 2024 Gerador de Orçamentos. Todos os direitos reservados.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
