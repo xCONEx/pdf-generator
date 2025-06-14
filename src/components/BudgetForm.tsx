@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -210,6 +209,17 @@ const BudgetForm = () => {
     ? selectedPremiumTemplate.colorScheme 
     : COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES];
 
+  // Função para obter gradient com fallback
+  const getThemeGradient = () => {
+    if (selectedPremiumTemplate?.colorScheme?.gradient) {
+      return selectedPremiumTemplate.colorScheme.gradient;
+    }
+    if (currentTheme?.gradient) {
+      return currentTheme.gradient;
+    }
+    return 'from-blue-500 to-blue-600'; // fallback padrão
+  };
+
   if (loadingCompany || loadingClients) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -223,7 +233,7 @@ const BudgetForm = () => {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div className="text-center flex-1">
-            <h1 className={`text-4xl font-bold bg-gradient-to-r ${currentTheme.gradient || 'from-blue-500 to-blue-600'} bg-clip-text text-transparent mb-2`}>
+            <h1 className={`text-4xl font-bold bg-gradient-to-r ${getThemeGradient()} bg-clip-text text-transparent mb-2`}>
               Gerador de Orçamentos
             </h1>
             <p className="text-gray-600">Crie orçamentos profissionais e personalizados em PDF</p>
@@ -421,7 +431,7 @@ const BudgetForm = () => {
                       key={key}
                       onClick={() => {
                         setBudgetData(prev => ({ ...prev, colorTheme: key }));
-                        setSelectedPremiumTemplate(null); // Reset premium template when using basic theme
+                        setSelectedPremiumTemplate(null); 
                       }}
                       className={`w-full h-12 rounded-lg border-2 transition-all ${
                         budgetData.colorTheme === key && !selectedPremiumTemplate ? 'border-gray-800 scale-105' : 'border-gray-200'

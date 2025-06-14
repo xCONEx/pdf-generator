@@ -63,6 +63,15 @@ export const useCompanyProfile = () => {
         throw new Error('Usuário não autenticado');
       }
 
+      console.log('Salvando dados da empresa:', companyInfo);
+
+      // Verificar se já existe um perfil para esse usuário
+      const { data: existingProfile } = await supabase
+        .from('company_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
       const profileData = {
         user_id: user.id,
         name: companyInfo.name,
@@ -73,13 +82,28 @@ export const useCompanyProfile = () => {
         updated_at: new Date().toISOString()
       };
 
-      const { error } = await supabase
-        .from('company_profiles')
-        .upsert(profileData, {
-          onConflict: 'user_id'
-        });
+      let result;
 
-      if (error) throw error;
+      if (existingProfile) {
+        // Atualizar perfil existente
+        result = await supabase
+          .from('company_profiles')
+          .update(profileData)
+          .eq('user_id', user.id);
+      } else {
+        // Criar novo perfil
+        result = await supabase
+          .from('company_profiles')
+          .insert({
+            ...profileData,
+            created_at: new Date().toISOString()
+          });
+      }
+
+      if (result.error) {
+        console.error('Erro detalhado ao salvar:', result.error);
+        throw result.error;
+      }
 
       setCompanyProfile(companyInfo);
       toast({
