@@ -75,6 +75,26 @@ const AdminPanel = () => {
           } else {
             console.log('Licença admin criada para:', email);
           }
+        } else if (existingLicense.plan !== 'enterprise') {
+          // Atualizar para enterprise se não for
+          const expiresAt = new Date();
+          expiresAt.setFullYear(expiresAt.getFullYear() + 10);
+
+          const { error } = await supabase
+            .from('user_licenses')
+            .update({
+              plan: 'enterprise',
+              status: 'active',
+              expires_at: expiresAt.toISOString(),
+              pdf_limit: 999999
+            })
+            .eq('id', existingLicense.id);
+
+          if (error) {
+            console.error('Erro ao atualizar licença admin:', error);
+          } else {
+            console.log('Licença admin atualizada para:', email);
+          }
         }
       } catch (error) {
         console.error('Erro ao verificar/criar licença admin:', error);
@@ -169,266 +189,270 @@ const AdminPanel = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-6">
-      <div className="mb-6 md:mb-8">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-              Painel Administrativo
-            </h1>
-            <p className="text-gray-600">
-              Gerenciamento de compras e licenças do sistema
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto p-3 sm:p-4 md:p-6">
+        <div className="mb-4 sm:mb-6 md:mb-8">
+          <div className="flex flex-col gap-3 sm:gap-4">
+            <div className="text-center sm:text-left">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
+                Painel Administrativo
+              </h1>
+              <p className="text-sm sm:text-base text-gray-600">
+                Gerenciamento de compras e licenças do sistema
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+              <Button
+                onClick={() => setShowAddMember(true)}
+                className="flex items-center justify-center space-x-2 text-xs sm:text-sm h-8 sm:h-9"
+                size="sm"
+              >
+                <Plus size={14} />
+                <span>Adicionar Membro</span>
+              </Button>
+              <Button
+                onClick={goToSalesPage}
+                variant="outline"
+                className="flex items-center justify-center space-x-2 text-xs sm:text-sm h-8 sm:h-9"
+                size="sm"
+              >
+                <ArrowRight size={14} />
+                <span>Página de Vendas</span>
+              </Button>
+              <Button
+                onClick={goToPdfGenerator}
+                variant="secondary"
+                className="flex items-center justify-center space-x-2 text-xs sm:text-sm h-8 sm:h-9 sm:col-span-2 lg:col-span-1"
+                size="sm"
+              >
+                <FileText size={14} />
+                <span>Voltar ao Gerador</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Modal para adicionar membro */}
+        {showAddMember && (
+          <AddMemberForm
+            onClose={() => setShowAddMember(false)}
+            onSuccess={() => {
+              setShowAddMember(false);
+              loadAdminData();
+            }}
+          />
+        )}
+
+        {/* Modal para editar plano */}
+        {editingLicense && (
+          <EditPlanForm
+            license={editingLicense}
+            onClose={() => setEditingLicense(null)}
+            onSuccess={() => {
+              setEditingLicense(null);
+              loadAdminData();
+            }}
+          />
+        )}
+
+        {/* Estatísticas */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6 md:mb-8">
+          <div className="bg-white p-3 sm:p-4 md:p-6 rounded-lg shadow">
+            <h3 className="text-xs md:text-sm font-medium text-gray-500 mb-1">Total de Compras</h3>
+            <p className="text-sm sm:text-lg md:text-2xl font-bold text-gray-900">{purchases.length}</p>
+          </div>
+          <div className="bg-white p-3 sm:p-4 md:p-6 rounded-lg shadow">
+            <h3 className="text-xs md:text-sm font-medium text-gray-500 mb-1">Licenças Ativas</h3>
+            <p className="text-sm sm:text-lg md:text-2xl font-bold text-green-600">
+              {licenses.filter(l => l.status === 'active').length}
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-            <Button
-              onClick={() => setShowAddMember(true)}
-              className="flex items-center justify-center space-x-2 text-sm"
-              size="sm"
-            >
-              <Plus size={16} />
-              <span>Adicionar Membro</span>
-            </Button>
-            <Button
-              onClick={goToSalesPage}
-              variant="outline"
-              className="flex items-center justify-center space-x-2 text-sm"
-              size="sm"
-            >
-              <ArrowRight size={16} />
-              <span>Página de Vendas</span>
-            </Button>
-            <Button
-              onClick={goToPdfGenerator}
-              variant="secondary"
-              className="flex items-center justify-center space-x-2 text-sm"
-              size="sm"
-            >
-              <FileText size={16} />
-              <span>Voltar ao Gerador</span>
-            </Button>
+          <div className="bg-white p-3 sm:p-4 md:p-6 rounded-lg shadow">
+            <h3 className="text-xs md:text-sm font-medium text-gray-500 mb-1">Planos Premium</h3>
+            <p className="text-sm sm:text-lg md:text-2xl font-bold text-purple-600">
+              {licenses.filter(l => l.plan === 'premium').length}
+            </p>
+          </div>
+          <div className="bg-white p-3 sm:p-4 md:p-6 rounded-lg shadow">
+            <h3 className="text-xs md:text-sm font-medium text-gray-500 mb-1">Receita Total</h3>
+            <p className="text-sm sm:text-lg md:text-2xl font-bold text-green-600">
+              R$ {purchases.reduce((sum, p) => sum + (p.amount || 0), 0).toFixed(2)}
+            </p>
           </div>
         </div>
-      </div>
 
-      {/* Modal para adicionar membro */}
-      {showAddMember && (
-        <AddMemberForm
-          onClose={() => setShowAddMember(false)}
-          onSuccess={() => {
-            setShowAddMember(false);
-            loadAdminData();
-          }}
-        />
-      )}
+        {/* Compras Recentes */}
+        {purchases.length > 0 && (
+          <div className="bg-white rounded-lg shadow mb-4 sm:mb-6 md:mb-8 overflow-hidden">
+            <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 border-b">
+              <h2 className="text-base sm:text-lg md:text-xl font-semibold">Compras Recentes</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[600px]">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-2 sm:px-3 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Email
+                    </th>
+                    <th className="px-2 sm:px-3 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Produto
+                    </th>
+                    <th className="px-2 sm:px-3 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Plano
+                    </th>
+                    <th className="px-2 sm:px-3 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Valor
+                    </th>
+                    <th className="px-2 sm:px-3 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Status
+                    </th>
+                    <th className="px-2 sm:px-3 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Data
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {purchases.map((purchase) => (
+                    <tr key={purchase.id}>
+                      <td className="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-xs md:text-sm text-gray-900 break-all">
+                        {purchase.email}
+                      </td>
+                      <td className="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-xs md:text-sm text-gray-900">
+                        {purchase.product_name}
+                      </td>
+                      <td className="px-2 sm:px-3 md:px-6 py-2 sm:py-4">
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          purchase.plan === 'premium' 
+                            ? 'bg-purple-100 text-purple-800' 
+                            : purchase.plan === 'enterprise'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {purchase.plan}
+                        </span>
+                      </td>
+                      <td className="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-xs md:text-sm text-gray-900">
+                        R$ {(purchase.amount || 0).toFixed(2)}
+                      </td>
+                      <td className="px-2 sm:px-3 md:px-6 py-2 sm:py-4">
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          purchase.payment_status === 'approved' || purchase.payment_status === 'paid'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {purchase.payment_status}
+                        </span>
+                      </td>
+                      <td className="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-xs md:text-sm text-gray-500">
+                        {new Date(purchase.created_at).toLocaleDateString('pt-BR')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
-      {/* Modal para editar plano */}
-      {editingLicense && (
-        <EditPlanForm
-          license={editingLicense}
-          onClose={() => setEditingLicense(null)}
-          onSuccess={() => {
-            setEditingLicense(null);
-            loadAdminData();
-          }}
-        />
-      )}
-
-      {/* Estatísticas */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
-        <div className="bg-white p-4 md:p-6 rounded-lg shadow">
-          <h3 className="text-xs md:text-sm font-medium text-gray-500 mb-1">Total de Compras</h3>
-          <p className="text-lg md:text-2xl font-bold text-gray-900">{purchases.length}</p>
-        </div>
-        <div className="bg-white p-4 md:p-6 rounded-lg shadow">
-          <h3 className="text-xs md:text-sm font-medium text-gray-500 mb-1">Licenças Ativas</h3>
-          <p className="text-lg md:text-2xl font-bold text-green-600">
-            {licenses.filter(l => l.status === 'active').length}
-          </p>
-        </div>
-        <div className="bg-white p-4 md:p-6 rounded-lg shadow">
-          <h3 className="text-xs md:text-sm font-medium text-gray-500 mb-1">Planos Premium</h3>
-          <p className="text-lg md:text-2xl font-bold text-purple-600">
-            {licenses.filter(l => l.plan === 'premium').length}
-          </p>
-        </div>
-        <div className="bg-white p-4 md:p-6 rounded-lg shadow">
-          <h3 className="text-xs md:text-sm font-medium text-gray-500 mb-1">Receita Total</h3>
-          <p className="text-lg md:text-2xl font-bold text-green-600">
-            R$ {purchases.reduce((sum, p) => sum + (p.amount || 0), 0).toFixed(2)}
-          </p>
-        </div>
-      </div>
-
-      {/* Compras Recentes */}
-      {purchases.length > 0 && (
-        <div className="bg-white rounded-lg shadow mb-6 md:mb-8 overflow-hidden">
-          <div className="px-4 md:px-6 py-4 border-b">
-            <h2 className="text-lg md:text-xl font-semibold">Compras Recentes</h2>
+        {/* Gerenciamento de Licenças */}
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 border-b">
+            <h2 className="text-base sm:text-lg md:text-xl font-semibold">Gerenciamento de Licenças</h2>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[600px]">
+            <table className="w-full min-w-[700px]">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-2 sm:px-3 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Email
                   </th>
-                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Produto
-                  </th>
-                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-2 sm:px-3 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Plano
                   </th>
-                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Valor
-                  </th>
-                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-2 sm:px-3 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Status
                   </th>
-                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Data
+                  <th className="px-2 sm:px-3 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    PDFs Gerados
+                  </th>
+                  <th className="px-2 sm:px-3 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Expira em
+                  </th>
+                  <th className="px-2 sm:px-3 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Ações
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {purchases.map((purchase) => (
-                  <tr key={purchase.id}>
-                    <td className="px-3 md:px-6 py-4 text-xs md:text-sm text-gray-900 break-all">
-                      {purchase.email}
+                {licenses.map((license) => (
+                  <tr key={license.id}>
+                    <td className="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-xs md:text-sm text-gray-900 break-all">
+                      {license.email}
                     </td>
-                    <td className="px-3 md:px-6 py-4 text-xs md:text-sm text-gray-900">
-                      {purchase.product_name}
-                    </td>
-                    <td className="px-3 md:px-6 py-4">
+                    <td className="px-2 sm:px-3 md:px-6 py-2 sm:py-4">
                       <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        purchase.plan === 'premium' 
+                        license.plan === 'premium' 
                           ? 'bg-purple-100 text-purple-800' 
+                          : license.plan === 'enterprise'
+                          ? 'bg-green-100 text-green-800'
                           : 'bg-blue-100 text-blue-800'
                       }`}>
-                        {purchase.plan}
+                        {license.plan}
                       </span>
                     </td>
-                    <td className="px-3 md:px-6 py-4 text-xs md:text-sm text-gray-900">
-                      R$ {(purchase.amount || 0).toFixed(2)}
-                    </td>
-                    <td className="px-3 md:px-6 py-4">
+                    <td className="px-2 sm:px-3 md:px-6 py-2 sm:py-4">
                       <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        purchase.payment_status === 'approved' || purchase.payment_status === 'paid'
+                        license.status === 'active'
                           ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
+                          : license.status === 'expired'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-gray-100 text-gray-800'
                       }`}>
-                        {purchase.payment_status}
+                        {license.status}
                       </span>
                     </td>
-                    <td className="px-3 md:px-6 py-4 text-xs md:text-sm text-gray-500">
-                      {new Date(purchase.created_at).toLocaleDateString('pt-BR')}
+                    <td className="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-xs md:text-sm text-gray-900">
+                      {license.pdfs_generated}/{license.pdf_limit === 999999 ? '∞' : license.pdf_limit}
+                    </td>
+                    <td className="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-xs md:text-sm text-gray-500">
+                      {new Date(license.expires_at).toLocaleDateString('pt-BR')}
+                    </td>
+                    <td className="px-2 sm:px-3 md:px-6 py-2 sm:py-4">
+                      <div className="flex flex-col sm:flex-row gap-1 sm:gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingLicense(license)}
+                          className="flex items-center justify-center space-x-1 text-xs h-7 sm:h-8 px-2"
+                        >
+                          <Edit size={12} />
+                          <span>Editar</span>
+                        </Button>
+                        {license.status === 'active' ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateLicenseStatus(license.id, 'suspended')}
+                            className="text-xs h-7 sm:h-8 px-2"
+                          >
+                            Suspender
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            onClick={() => updateLicenseStatus(license.id, 'active')}
+                            className="text-xs h-7 sm:h-8 px-2"
+                          >
+                            Ativar
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
-
-      {/* Gerenciamento de Licenças */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="px-4 md:px-6 py-4 border-b">
-          <h2 className="text-lg md:text-xl font-semibold">Gerenciamento de Licenças</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px]">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Email
-                </th>
-                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Plano
-                </th>
-                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Status
-                </th>
-                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  PDFs Gerados
-                </th>
-                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Expira em
-                </th>
-                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Ações
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {licenses.map((license) => (
-                <tr key={license.id}>
-                  <td className="px-3 md:px-6 py-4 text-xs md:text-sm text-gray-900 break-all">
-                    {license.email}
-                  </td>
-                  <td className="px-3 md:px-6 py-4">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      license.plan === 'premium' 
-                        ? 'bg-purple-100 text-purple-800' 
-                        : license.plan === 'enterprise'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {license.plan}
-                    </span>
-                  </td>
-                  <td className="px-3 md:px-6 py-4">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      license.status === 'active'
-                        ? 'bg-green-100 text-green-800'
-                        : license.status === 'expired'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {license.status}
-                    </span>
-                  </td>
-                  <td className="px-3 md:px-6 py-4 text-xs md:text-sm text-gray-900">
-                    {license.pdfs_generated}/{license.pdf_limit === 999999 ? '∞' : license.pdf_limit}
-                  </td>
-                  <td className="px-3 md:px-6 py-4 text-xs md:text-sm text-gray-500">
-                    {new Date(license.expires_at).toLocaleDateString('pt-BR')}
-                  </td>
-                  <td className="px-3 md:px-6 py-4">
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setEditingLicense(license)}
-                        className="flex items-center space-x-1 text-xs"
-                      >
-                        <Edit size={12} />
-                        <span>Editar</span>
-                      </Button>
-                      {license.status === 'active' ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateLicenseStatus(license.id, 'suspended')}
-                          className="text-xs"
-                        >
-                          Suspender
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          onClick={() => updateLicenseStatus(license.id, 'active')}
-                          className="text-xs"
-                        >
-                          Ativar
-                        </Button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       </div>
     </div>
