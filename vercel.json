@@ -2,8 +2,19 @@
 {
   "rewrites": [
     {
-      "source": "/((?!assets/).*)",
-      "destination": "/"
+      "source": "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|manifest.json|sw.js|assets).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     }
   ]
 }
