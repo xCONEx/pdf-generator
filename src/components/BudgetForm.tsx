@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Upload, Download, Save, Users, Crown } from 'lucide-react';
+import { Plus, Trash2, Upload, Download, Save, Users, Crown, BarChart3, FileText } from 'lucide-react';
 import { BudgetData, ServiceItem, COLOR_THEMES, CompanyInfo, ClientInfo } from '@/types/budget';
 import { generatePDF } from '@/utils/pdfGenerator';
 import { toast } from '@/hooks/use-toast';
@@ -15,6 +16,8 @@ import { useLicenseValidation } from '@/hooks/useLicenseValidation';
 import PremiumFeatures from './premium/PremiumFeatures';
 import { PremiumTemplate } from './premium/TemplateSelector';
 import { AdvancedCustomizationOptions } from './premium/AdvancedCustomization';
+import TemplateSelector from './premium/TemplateSelector';
+import AnalyticsDashboard from './premium/AnalyticsDashboard';
 
 const BudgetForm = () => {
   const { companyProfile, loading: loadingCompany, saveCompanyProfile } = useCompanyProfile();
@@ -45,6 +48,8 @@ const BudgetForm = () => {
   const [logoPreview, setLogoPreview] = useState<string>('');
   const [showClientModal, setShowClientModal] = useState(false);
   const [showPremiumFeatures, setShowPremiumFeatures] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const [selectedPremiumTemplate, setSelectedPremiumTemplate] = useState<PremiumTemplate | null>(null);
   const [advancedCustomization, setAdvancedCustomization] = useState<AdvancedCustomizationOptions | null>(null);
 
@@ -140,7 +145,16 @@ const BudgetForm = () => {
 
   const handleGeneratePDF = async () => {
     try {
-      // Create enhanced budget data with premium features
+      // Verificar se usuário pode gerar PDF
+      if (license?.plan !== 'enterprise' && !license) {
+        toast({
+          title: "Funcionalidade Premium",
+          description: "Templates premium disponíveis apenas no plano Enterprise.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const enhancedBudgetData = {
         ...budgetData,
         premiumTemplate: selectedPremiumTemplate,
@@ -162,8 +176,16 @@ const BudgetForm = () => {
   };
 
   const handlePremiumTemplateSelect = (template: PremiumTemplate) => {
+    if (license?.plan !== 'enterprise') {
+      toast({
+        title: "Funcionalidade Premium",
+        description: "Templates premium disponíveis apenas no plano Enterprise.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setSelectedPremiumTemplate(template);
-    // Aplicar cores do template ao tema atual
     setBudgetData(prev => ({ ...prev, colorTheme: 'custom' }));
     toast({
       title: "Template Aplicado",
@@ -207,20 +229,73 @@ const BudgetForm = () => {
             <p className="text-gray-600">Crie orçamentos profissionais e personalizados em PDF</p>
           </div>
           <div className="flex gap-2">
+            <Button
+              onClick={() => setShowTemplates(!showTemplates)}
+              className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+            >
+              <FileText className="w-4 h-4 mr-1" />
+              Templates Premium
+              <Crown className="w-4 h-4 ml-1" />
+            </Button>
+            <Button
+              onClick={() => setShowAnalytics(!showAnalytics)}
+              className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+            >
+              <BarChart3 className="w-4 h-4 mr-1" />
+              Analytics
+            </Button>
             {license?.plan === 'enterprise' && (
               <Button
                 onClick={() => setShowPremiumFeatures(!showPremiumFeatures)}
                 className="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700"
               >
                 <Crown className="w-4 h-4 mr-1" />
-                {showPremiumFeatures ? 'Ocultar Premium' : 'Funcionalidades Premium'}
+                {showPremiumFeatures ? 'Ocultar Premium' : 'Todas as Funcionalidades'}
               </Button>
             )}
             <AdminNavButton />
           </div>
         </div>
 
-        {/* Funcionalidades Premium */}
+        {/* Templates Premium */}
+        {showTemplates && (
+          <div className="mb-8">
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Templates Premium
+                  <Crown className="w-5 h-5 text-yellow-500" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <TemplateSelector 
+                  selectedTemplate={selectedPremiumTemplate?.id || ''}
+                  onTemplateSelect={handlePremiumTemplateSelect}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Analytics Dashboard */}
+        {showAnalytics && (
+          <div className="mb-8">
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5" />
+                  Analytics Dashboard
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AnalyticsDashboard />
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Funcionalidades Premium Completas */}
         {showPremiumFeatures && license?.plan === 'enterprise' && (
           <div className="mb-8">
             <PremiumFeatures 
