@@ -1,4 +1,3 @@
-
 import BudgetForm from '@/components/BudgetForm';
 import UserDashboard from '@/components/UserDashboard';
 import AdminNavButton from '@/components/AdminNavButton';
@@ -88,7 +87,7 @@ const Index = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.open('/vendas', '_blank')}
+            onClick={() => window.open('/vendas.html', '_blank')}
             className="flex items-center space-x-2"
           >
             <span>Página de Vendas</span>
