@@ -4,8 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Upload, Download, Save, Users, Crown, BarChart3, FileText, X, Sparkles, Archive, Palette } from 'lucide-react';
-import { BudgetData, ServiceItem, COLOR_THEMES, CompanyInfo, ClientInfo } from '@/types/budget';
+import { Plus, Trash2, Upload, Download, Save, Users, Crown, BarChart3, X, Sparkles, Archive, Palette } from 'lucide-react';
+import { BudgetData, ServiceItem, COLOR_THEMES, ClientInfo } from '@/types/budget';
 import { generatePDF } from '@/utils/pdfGenerator';
 import { toast } from '@/hooks/use-toast';
 import AdminNavButton from './AdminNavButton';
@@ -15,16 +15,14 @@ import { useLicenseValidation } from '@/hooks/useLicenseValidation';
 import PremiumFeatures from './premium/PremiumFeatures';
 import { PremiumTemplate } from './premium/TemplateSelector';
 import { AdvancedCustomizationOptions } from './premium/AdvancedCustomization';
-import TemplateSelector from './premium/TemplateSelector';
-import AnalyticsDashboard from './premium/AnalyticsDashboard';
-import AdvancedAnalytics from './premium/AdvancedAnalytics';
 import ExclusiveTemplates, { ExclusiveTemplate } from './premium/ExclusiveTemplates';
+import AdvancedAnalytics from './premium/AdvancedAnalytics';
 
 const BudgetForm = () => {
   const { companyProfile, loading: loadingCompany, saveCompanyProfile } = useCompanyProfile();
   const { savedClients, loading: loadingClients, saveClient, deleteClient } = useSavedClients();
   const { license } = useLicenseValidation();
-  
+
   const [budgetData, setBudgetData] = useState<BudgetData>({
     companyInfo: {
       name: '',
@@ -48,23 +46,19 @@ const BudgetForm = () => {
 
   const [logoPreview, setLogoPreview] = useState<string>('');
   const [showClientModal, setShowClientModal] = useState(false);
-  const [showPremiumFeatures, setShowPremiumFeatures] = useState(false);
-  const [showTemplates, setShowTemplates] = useState(false);
-  const [showAnalytics, setShowAnalytics] = useState(false);
-  const [showAdvancedAnalytics, setShowAdvancedAnalytics] = useState(false);
   const [showExclusiveTemplates, setShowExclusiveTemplates] = useState(false);
+  const [showAdvancedAnalytics, setShowAdvancedAnalytics] = useState(false);
   const [showAllPremiumFeatures, setShowAllPremiumFeatures] = useState(false);
   const [selectedPremiumTemplate, setSelectedPremiumTemplate] = useState<PremiumTemplate | null>(null);
   const [selectedExclusiveTemplate, setSelectedExclusiveTemplate] = useState<ExclusiveTemplate | null>(null);
   const [advancedCustomization, setAdvancedCustomization] = useState<AdvancedCustomizationOptions | null>(null);
   const [isHoveringLogo, setIsHoveringLogo] = useState(false);
 
-  // Carregar dados da empresa quando disponível
   useEffect(() => {
     if (companyProfile) {
-      setBudgetData(prev => ({ 
-        ...prev, 
-        companyInfo: companyProfile 
+      setBudgetData(prev => ({
+        ...prev,
+        companyInfo: companyProfile
       }));
       if (companyProfile.logoUrl) {
         setLogoPreview(companyProfile.logoUrl);
@@ -163,7 +157,6 @@ const BudgetForm = () => {
 
   const handleGeneratePDF = async () => {
     try {
-      // Verificar se usuário pode gerar PDF
       if (license?.plan !== 'enterprise' && !license) {
         toast({
           title: "Funcionalidade Premium",
@@ -179,7 +172,7 @@ const BudgetForm = () => {
         exclusiveTemplate: selectedExclusiveTemplate,
         advancedCustomization: advancedCustomization
       };
-      
+
       await generatePDF(enhancedBudgetData);
       toast({
         title: "PDF Gerado com Sucesso!",
@@ -194,25 +187,6 @@ const BudgetForm = () => {
     }
   };
 
-  const handlePremiumTemplateSelect = (template: PremiumTemplate) => {
-    if (license?.plan !== 'enterprise') {
-      toast({
-        title: "Funcionalidade Premium",
-        description: "Templates premium disponíveis apenas no plano Enterprise.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setSelectedPremiumTemplate(template);
-    setSelectedExclusiveTemplate(null); // Limpar template exclusivo
-    setBudgetData(prev => ({ ...prev, colorTheme: 'custom' }));
-    toast({
-      title: "Template Aplicado",
-      description: `Template "${template.name}" foi aplicado ao orçamento.`,
-    });
-  };
-
   const handleExclusiveTemplateSelect = (template: ExclusiveTemplate) => {
     if (license?.plan !== 'enterprise') {
       toast({
@@ -222,9 +196,9 @@ const BudgetForm = () => {
       });
       return;
     }
-    
+
     setSelectedExclusiveTemplate(template);
-    setSelectedPremiumTemplate(null); // Limpar template premium padrão
+    setSelectedPremiumTemplate(null);
     setBudgetData(prev => ({ ...prev, colorTheme: 'custom' }));
     toast({
       title: "Template Exclusivo Aplicado",
@@ -242,15 +216,13 @@ const BudgetForm = () => {
 
   const handleLoadBudgetFromBackup = (loadedBudgetData: BudgetData) => {
     setBudgetData(loadedBudgetData);
-    setShowPremiumFeatures(false);
   };
 
-  // Função para obter gradient com fallback
   const getThemeGradient = () => {
     if (selectedExclusiveTemplate) {
       return selectedExclusiveTemplate.colorScheme.gradient;
     }
-    
+
     switch (budgetData.colorTheme) {
       case 'blue':
         return 'from-blue-500 to-blue-600';
@@ -267,15 +239,13 @@ const BudgetForm = () => {
     }
   };
 
-  // Determinar qual tema usar baseado nos templates selecionados
-  const currentTheme = selectedExclusiveTemplate 
+  const currentTheme = selectedExclusiveTemplate
     ? selectedExclusiveTemplate.colorScheme
-    : selectedPremiumTemplate 
-      ? selectedPremiumTemplate.colorScheme 
+    : selectedPremiumTemplate
+      ? selectedPremiumTemplate.colorScheme
       : COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES];
 
-  // Verificar se usuário tem acesso premium
-  const user = null; // Placeholder, você pode pegar do contexto se necessário
+  const user = null;
   const isAdmin = user?.email === 'adm.financeflow@gmail.com' || user?.email === 'yuriadrskt@gmail.com';
   const isEnterprise = license?.plan === 'enterprise';
   const hasAccessToPremium = isEnterprise || isAdmin;
@@ -303,10 +273,97 @@ const BudgetForm = () => {
           </div>
         </div>
 
-        {/* Premium Cards - Entre o título e o formulário */}
+        {/* APENAS OS 3 CARDS PREMIUM */}
+        {hasAccessToPremium && !showExclusiveTemplates && !showAdvancedAnalytics && !showAllPremiumFeatures && (
+          <div className="mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card
+                className="hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-yellow-300 bg-gradient-to-br from-yellow-50 to-purple-50 hover:scale-105"
+                onClick={() => setShowExclusiveTemplates(true)}
+              >
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Sparkles className="w-6 h-6 text-purple-500" />
+                    Templates Exclusivos
+                    <Crown className="w-5 h-5 text-yellow-500" />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600 mb-4">
+                    🎨 6 templates únicos e exclusivos para seu negócio
+                  </p>
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowExclusiveTemplates(true);
+                    }}
+                    className="w-full bg-gradient-to-r from-yellow-500 to-purple-500 hover:from-yellow-600 hover:to-purple-600 text-white font-semibold"
+                  >
+                    Explorar Templates
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card
+                className="hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-indigo-50 hover:scale-105"
+                onClick={() => setShowAdvancedAnalytics(true)}
+              >
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <BarChart3 className="w-6 h-6 text-blue-500" />
+                    Analytics Avançados
+                    <Crown className="w-5 h-5 text-yellow-500" />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600 mb-4">
+                    📊 Relatórios detalhados e insights do seu negócio
+                  </p>
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowAdvancedAnalytics(true);
+                    }}
+                    className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold"
+                  >
+                    Ver Analytics
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card
+                className="hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-green-300 bg-gradient-to-br from-green-50 to-emerald-50 hover:scale-105"
+                onClick={() => setShowAllPremiumFeatures(true)}
+              >
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Archive className="w-6 h-6 text-green-500" />
+                    Todas as Funcionalidades
+                    <Crown className="w-5 h-5 text-yellow-500" />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600 mb-4">
+                    🎯 Acesso completo a todas as funcionalidades premium
+                  </p>
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowAllPremiumFeatures(true);
+                    }}
+                    className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold"
+                  >
+                    Acessar Tudo
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {/* SEÇÕES EXPANDIDAS */}
         {hasAccessToPremium && (
           <div className="mb-8 space-y-6">
-            {/* Exclusive Templates Section */}
             {showExclusiveTemplates && (
               <Card className="shadow-xl border-2 border-yellow-300 bg-gradient-to-br from-yellow-50 to-purple-50">
                 <CardHeader className="bg-gradient-to-r from-yellow-400 to-purple-500 text-white rounded-t-lg">
@@ -327,7 +384,7 @@ const BudgetForm = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">
-                  <ExclusiveTemplates 
+                  <ExclusiveTemplates
                     selectedTemplate={selectedExclusiveTemplate?.id || ''}
                     onTemplateSelect={handleExclusiveTemplateSelect}
                   />
@@ -335,7 +392,6 @@ const BudgetForm = () => {
               </Card>
             )}
 
-            {/* Advanced Analytics Section */}
             {showAdvancedAnalytics && (
               <Card className="shadow-xl border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-indigo-50">
                 <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-t-lg">
@@ -361,7 +417,6 @@ const BudgetForm = () => {
               </Card>
             )}
 
-            {/* All Premium Features Section */}
             {showAllPremiumFeatures && (
               <Card className="shadow-xl border-2 border-green-300 bg-gradient-to-br from-green-50 to-emerald-50">
                 <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
@@ -382,120 +437,19 @@ const BudgetForm = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">
-                  <PremiumFeatures 
-                    onTemplateSelect={handlePremiumTemplateSelect}
+                  <PremiumFeatures
+                    onTemplateSelect={(template) => setSelectedPremiumTemplate(template)}
                     onCustomizationChange={handleAdvancedCustomizationChange}
                     onLoadBudget={handleLoadBudgetFromBackup}
                   />
                 </CardContent>
               </Card>
             )}
-
-            {/* Premium Features Overview Cards - Sempre visível quando nenhuma seção está aberta */}
-            {!showExclusiveTemplates && !showAdvancedAnalytics && !showAllPremiumFeatures && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card 
-                  className="hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-yellow-300 bg-gradient-to-br from-yellow-50 to-purple-50 hover:scale-105"
-                  onClick={() => {
-                    console.log('🎨 Card Templates clicado');
-                    setShowExclusiveTemplates(true);
-                  }}
-                >
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Sparkles className="w-6 h-6 text-purple-500" />
-                      Templates Exclusivos
-                      <Crown className="w-5 h-5 text-yellow-500" />
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-600 mb-4">
-                      🎨 6 templates únicos e exclusivos para seu negócio
-                    </p>
-                    <Button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        console.log('🎨 Botão Templates clicado');
-                        setShowExclusiveTemplates(true);
-                      }}
-                      className="w-full bg-gradient-to-r from-yellow-500 to-purple-500 hover:from-yellow-600 hover:to-purple-600 text-white font-semibold"
-                      size="default"
-                    >
-                      Explorar Templates
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card 
-                  className="hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-indigo-50 hover:scale-105"
-                  onClick={() => {
-                    console.log('📊 Card Analytics clicado');
-                    setShowAdvancedAnalytics(true);
-                  }}
-                >
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <BarChart3 className="w-6 h-6 text-blue-500" />
-                      Analytics Avançados
-                      <Crown className="w-5 h-5 text-yellow-500" />
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-600 mb-4">
-                      📊 Relatórios detalhados e insights do seu negócio
-                    </p>
-                    <Button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        console.log('📊 Botão Analytics clicado');
-                        setShowAdvancedAnalytics(true);
-                      }}
-                      className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold"
-                      size="default"
-                    >
-                      Ver Analytics
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card 
-                  className="hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-green-300 bg-gradient-to-br from-green-50 to-emerald-50 hover:scale-105"
-                  onClick={() => {
-                    console.log('🎯 Card Todas Funcionalidades clicado');
-                    setShowAllPremiumFeatures(true);
-                  }}
-                >
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Archive className="w-6 h-6 text-green-500" />
-                      Todas as Funcionalidades
-                      <Crown className="w-5 h-5 text-yellow-500" />
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-600 mb-4">
-                      🎯 Acesso completo a todas as funcionalidades premium
-                    </p>
-                    <Button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        console.log('🎯 Botão Todas Funcionalidades clicado');
-                        setShowAllPremiumFeatures(true);
-                      }}
-                      className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold"
-                      size="default"
-                    >
-                      Acessar Tudo
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
           </div>
         )}
 
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* Formulário */}
+          {/* FORMULÁRIO */}
           <div className="space-y-6">
             {/* Informações da Empresa */}
             <Card className="shadow-lg">
@@ -531,9 +485,9 @@ const BudgetForm = () => {
                     >
                       {logoPreview ? (
                         <div className="relative">
-                          <img 
-                            src={logoPreview} 
-                            alt="Logo" 
+                          <img
+                            src={logoPreview}
+                            alt="Logo"
                             className="max-h-28 max-w-full object-contain"
                             style={{ maxWidth: '200px', maxHeight: '112px' }}
                           />
@@ -564,7 +518,7 @@ const BudgetForm = () => {
                     </label>
                   </div>
                 </div>
-                
+
                 <div>
                   <Label>Nome da Empresa</Label>
                   <Input
@@ -618,7 +572,7 @@ const BudgetForm = () => {
               </CardContent>
             </Card>
 
-            {/* Tema de Cores - SEMPRE VISÍVEL */}
+            {/* Tema de Cores */}
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle style={{ color: currentTheme.primary }}>Escolha o Tema</CardTitle>
@@ -678,7 +632,6 @@ const BudgetForm = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Client form fields */}
                 <div>
                   <Label>Nome do Cliente</Label>
                   <Input
@@ -762,7 +715,7 @@ const BudgetForm = () => {
                         </Button>
                       )}
                     </div>
-                    
+
                     <div>
                       <Input
                         value={item.description}
@@ -809,7 +762,7 @@ const BudgetForm = () => {
                     <span className="font-medium">Subtotal:</span>
                     <span className="font-bold">R$ {calculateSubtotal().toFixed(2)}</span>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 mb-2">
                     <Label className="text-sm">Desconto (%):</Label>
                     <Input
