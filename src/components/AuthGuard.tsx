@@ -65,8 +65,14 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       if (error) {
         console.error('Erro ao verificar licença:', error);
         setLicense(null);
-      } else {
-        setLicense(data);
+      } else if (data) {
+        // Cast the database result to our expected types
+        const typedLicense: UserLicense = {
+          ...data,
+          plan: data.plan as 'basic' | 'premium',
+          status: data.status as 'active' | 'expired' | 'suspended'
+        };
+        setLicense(typedLicense);
       }
     } catch (error) {
       console.error('Erro na verificação de licença:', error);

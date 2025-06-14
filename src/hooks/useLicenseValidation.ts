@@ -54,7 +54,13 @@ export const useLicenseValidation = () => {
             });
           }
           
-          setLicense(data);
+          // Cast the database result to our expected types
+          const typedLicense: UserLicense = {
+            ...data,
+            plan: data.plan as 'basic' | 'premium',
+            status: data.status as 'active' | 'expired' | 'suspended'
+          };
+          setLicense(typedLicense);
         }
       } catch (error) {
         console.error('Erro na validação de licença:', error);
