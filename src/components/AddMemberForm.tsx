@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,19 @@ const AddMemberForm = ({ onClose, onSuccess }: AddMemberFormProps) => {
   const [plan, setPlan] = useState('basic');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  const getPdfLimit = (planType: string) => {
+    switch (planType) {
+      case 'basic':
+        return 10;
+      case 'premium':
+        return 50;
+      case 'enterprise':
+        return 999999; // Ilimitado
+      default:
+        return 10;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,16 +51,16 @@ const AddMemberForm = ({ onClose, onSuccess }: AddMemberFormProps) => {
         return;
       }
 
-      // Criar nova licença sem user_id (apenas com email para licenças administrativas)
+      // Criar nova licença
       const { error } = await supabase
         .from('user_licenses')
         .insert({
           email,
-          user_id: null, // Permite null para licenças criadas administrativamente
+          user_id: null,
           plan,
           status: 'active',
           expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-          pdf_limit: plan === 'premium' ? 100 : 10,
+          pdf_limit: getPdfLimit(plan),
           pdfs_generated: 0,
         });
 
@@ -114,8 +128,9 @@ const AddMemberForm = ({ onClose, onSuccess }: AddMemberFormProps) => {
               onChange={(e) => setPlan(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="basic">Básico (10 PDFs)</option>
-              <option value="premium">Premium (100 PDFs)</option>
+              <option value="basic">Básico (10 PDFs) - R$ 19,90</option>
+              <option value="premium">Profissional (50 PDFs) - R$ 39,90</option>
+              <option value="enterprise">Empresarial (Ilimitado) - R$ 59,90</option>
             </select>
           </div>
 

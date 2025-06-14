@@ -7,7 +7,7 @@ interface UserLicense {
   id: string;
   user_id: string | null;
   email: string | null;
-  plan: 'basic' | 'premium';
+  plan: 'basic' | 'premium' | 'enterprise';
   status: 'active' | 'expired' | 'suspended';
   expires_at: string;
   pdfs_generated: number;
@@ -33,6 +33,8 @@ export const useLicenseValidation = () => {
           return;
         }
 
+        console.log('Validando licença para:', user.email);
+
         // Buscar licença por user_id ou por email
         const { data, error } = await supabase
           .from('user_licenses')
@@ -46,6 +48,8 @@ export const useLicenseValidation = () => {
           console.error('Erro ao validar licença:', error);
           setLicense(null);
         } else if (data) {
+          console.log('Licença encontrada:', data);
+          
           // Verificar se a licença expirou
           if (new Date(data.expires_at) < new Date()) {
             await supabase
@@ -67,16 +71,18 @@ export const useLicenseValidation = () => {
               .update({ user_id: user.id })
               .eq('id', data.id);
             
-            // Atualizar o objeto local também
             data.user_id = user.id;
           }
           
           const typedLicense: UserLicense = {
             ...data,
-            plan: data.plan as 'basic' | 'premium',
+            plan: data.plan as 'basic' | 'premium' | 'enterprise',
             status: data.status as 'active' | 'expired' | 'suspended'
           };
           setLicense(typedLicense);
+        } else {
+          console.log('Nenhuma licença encontrada para:', user.email);
+          setLicense(null);
         }
       } catch (error) {
         if (isMounted) {
@@ -107,13 +113,31 @@ export const useLicenseValidation = () => {
   const canGeneratePDF = (): boolean => {
     if (!license || license.status !== 'active') return false;
     if (new Date(license.expires_at) < new Date()) return false;
+    // Para plano enterprise (ilimitado), não verificar limite
+    if (license.plan === 'enterprise') return true;
     if (license.pdfs_generated >= license.pdf_limit) return false;
     return true;
   };
 
   const getRemainingPDFs = (): number => {
     if (!license) return 0;
+    // Para plano enterprise, retornar um número alto para indicar ilimitado
+    if (license.plan === 'enterprise') return 999999;
     return Math.max(0, license.pdf_limit - license.pdfs_generated);
+  };
+
+  const getPlanDisplayName = (): string => {
+    if (!license) return '';
+    switch (license.plan) {
+      case 'basic':
+        return 'Básico';
+      case 'premium':
+        return 'Profissional';
+      case 'enterprise':
+        return 'Empresarial';
+      default:
+        return license.plan;
+    }
   };
 
   return {
@@ -121,5 +145,6 @@ export const useLicenseValidation = () => {
     loading,
     canGeneratePDF,
     getRemainingPDFs,
+    getPlanDisplayName,
   };
 };

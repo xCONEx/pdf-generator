@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
-  const { license, loading } = useLicenseValidation();
+  const { license, loading, getPlanDisplayName } = useLicenseValidation();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -62,8 +62,8 @@ const Index = () => {
     );
   }
 
-  // Verificar limite de PDFs
-  if (license.pdfs_generated >= license.pdf_limit) {
+  // Verificar limite de PDFs (apenas para planos que não são enterprise)
+  if (license.plan !== 'enterprise' && license.pdfs_generated >= license.pdf_limit) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
@@ -71,7 +71,7 @@ const Index = () => {
             Limite de PDFs Atingido
           </h2>
           <p className="text-gray-600 mb-6">
-            Você atingiu o limite de {license.pdf_limit} PDFs para seu plano {license.plan}.
+            Você atingiu o limite de {license.pdf_limit} PDFs para seu plano {getPlanDisplayName()}.
             Faça upgrade para continuar gerando orçamentos.
           </p>
           <div className="space-y-3">

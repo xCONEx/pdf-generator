@@ -7,7 +7,7 @@ import { User } from '@supabase/supabase-js';
 interface UserLicense {
   id: string;
   user_id: string;
-  plan: 'basic' | 'premium';
+  plan: 'basic' | 'premium' | 'enterprise';
   status: 'active' | 'expired' | 'suspended';
   expires_at: string;
   pdfs_generated: number;
@@ -61,8 +61,21 @@ const UserDashboard = ({ user, license }: UserDashboardProps) => {
     await supabase.auth.signOut();
   };
 
-  const planName = license.plan === 'basic' ? 'Básico' : 'Premium';
-  const planColor = license.plan === 'basic' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800';
+  const getPlanInfo = () => {
+    switch (license.plan) {
+      case 'basic':
+        return { name: 'Básico', color: 'bg-blue-100 text-blue-800', price: 'R$ 19,90' };
+      case 'premium':
+        return { name: 'Profissional', color: 'bg-purple-100 text-purple-800', price: 'R$ 39,90' };
+      case 'enterprise':
+        return { name: 'Empresarial', color: 'bg-green-100 text-green-800', price: 'R$ 59,90' };
+      default:
+        return { name: license.plan, color: 'bg-gray-100 text-gray-800', price: '' };
+    }
+  };
+
+  const planInfo = getPlanInfo();
+  const isUnlimited = license.plan === 'enterprise';
 
   return (
     <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
@@ -82,16 +95,17 @@ const UserDashboard = ({ user, license }: UserDashboardProps) => {
         <div className="bg-gray-50 p-4 rounded-lg">
           <h3 className="text-sm font-medium text-gray-500">Plano Atual</h3>
           <div className="mt-1">
-            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${planColor}`}>
-              {planName}
+            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${planInfo.color}`}>
+              {planInfo.name}
             </span>
+            <p className="text-xs text-gray-500 mt-1">{planInfo.price}/mês</p>
           </div>
         </div>
 
         <div className="bg-gray-50 p-4 rounded-lg">
           <h3 className="text-sm font-medium text-gray-500">PDFs Gerados</h3>
           <p className="text-2xl font-bold text-gray-900">
-            {license.pdfs_generated}/{license.pdf_limit}
+            {license.pdfs_generated}/{isUnlimited ? '∞' : license.pdf_limit}
           </p>
         </div>
 
@@ -119,7 +133,7 @@ const UserDashboard = ({ user, license }: UserDashboardProps) => {
             </p>
           </div>
           
-          {license.plan === 'basic' && (
+          {license.plan !== 'enterprise' && (
             <Button variant="outline" size="sm">
               Fazer Upgrade
             </Button>
