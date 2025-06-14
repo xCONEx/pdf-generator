@@ -6,23 +6,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
-import { ExternalLink } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const { license, loading, getPlanDisplayName } = useLicenseValidation();
-  const navigate = useNavigate();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
     });
   }, []);
-
-  const goToSalesPage = () => {
-    navigate('/vendas');
-  };
 
   if (loading) {
     return (
@@ -44,12 +37,6 @@ const Index = () => {
             Sua licença não está ativa ou expirou. Entre em contato com o suporte para renovar.
           </p>
           <div className="space-y-3">
-            <Button
-              onClick={goToSalesPage}
-              className="w-full bg-blue-600 text-white hover:bg-blue-700"
-            >
-              Ver Planos
-            </Button>
             <button
               onClick={() => supabase.auth.signOut()}
               className="w-full bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
@@ -78,12 +65,6 @@ const Index = () => {
             <p className="text-sm text-gray-500">
               PDFs gerados: {license.pdfs_generated}/{license.pdf_limit}
             </p>
-            <Button
-              onClick={goToSalesPage}
-              className="w-full bg-blue-600 text-white hover:bg-blue-700"
-            >
-              Fazer Upgrade
-            </Button>
             <button
               onClick={() => supabase.auth.signOut()}
               className="w-full bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
@@ -99,20 +80,10 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
-        <div className="mb-6 flex justify-between items-center">
+        <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900">
             Gerador de Orçamentos
           </h1>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={goToSalesPage}
-            className="flex items-center space-x-2"
-          >
-            <span>Página de Vendas</span>
-            <ExternalLink size={16} />
-          </Button>
         </div>
         
         {user && license && (
