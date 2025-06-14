@@ -105,7 +105,7 @@ const generateFingerprint = async (): Promise<string> => {
   }
 };
 
-const base64ToBlob = (base64: string, contentType: string): Blob => => {
+const base64ToBlob = (base64: string, contentType: string): Blob => {
   try {
     // Limpar qualquer caractere inválido
     const cleanBase64 = base64.replace(/[^A-Za-z0-9+/=]/g, '');
