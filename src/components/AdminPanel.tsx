@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowRight, Plus, FileText } from 'lucide-react';
+import { ArrowRight, Plus, FileText, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AddMemberForm from './AddMemberForm';
+import EditPlanForm from './EditPlanForm';
 
 interface Purchase {
   id: string;
@@ -32,12 +33,54 @@ const AdminPanel = () => {
   const [licenses, setLicenses] = useState<UserLicense[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddMember, setShowAddMember] = useState(false);
+  const [editingLicense, setEditingLicense] = useState<UserLicense | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     loadAdminData();
+    ensureAdminLicenses();
   }, []);
+
+  const ensureAdminLicenses = async () => {
+    const adminEmails = ['adm.financeflow@gmail.com', 'yuriadrskt@gmail.com'];
+    
+    for (const email of adminEmails) {
+      try {
+        // Verificar se já existe licença
+        const { data: existingLicense } = await supabase
+          .from('user_licenses')
+          .select('*')
+          .eq('email', email)
+          .maybeSingle();
+
+        if (!existingLicense) {
+          // Criar licença enterprise para admin
+          const expiresAt = new Date();
+          expiresAt.setFullYear(expiresAt.getFullYear() + 10); // 10 anos
+
+          const { error } = await supabase
+            .from('user_licenses')
+            .insert({
+              email: email,
+              plan: 'enterprise',
+              status: 'active',
+              expires_at: expiresAt.toISOString(),
+              pdf_limit: 999999,
+              pdfs_generated: 0
+            });
+
+          if (error) {
+            console.error('Erro ao criar licença admin:', error);
+          } else {
+            console.log('Licença admin criada para:', email);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao verificar/criar licença admin:', error);
+      }
+    }
+  };
 
   const loadAdminData = async () => {
     try {
@@ -126,40 +169,45 @@ const AdminPanel = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      <div className="mb-8 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Painel Administrativo
-          </h1>
-          <p className="text-gray-600">
-            Gerenciamento de compras e licenças do sistema
-          </p>
-        </div>
-        <div className="flex space-x-3">
-          <Button
-            onClick={() => setShowAddMember(true)}
-            className="flex items-center space-x-2"
-          >
-            <Plus size={16} />
-            <span>Adicionar Membro</span>
-          </Button>
-          <Button
-            onClick={goToSalesPage}
-            variant="outline"
-            className="flex items-center space-x-2"
-          >
-            <ArrowRight size={16} />
-            <span>Página de Vendas</span>
-          </Button>
-          <Button
-            onClick={goToPdfGenerator}
-            variant="secondary"
-            className="flex items-center space-x-2"
-          >
-            <FileText size={16} />
-            <span>Voltar ao Gerador</span>
-          </Button>
+    <div className="max-w-7xl mx-auto p-4 md:p-6">
+      <div className="mb-6 md:mb-8">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+              Painel Administrativo
+            </h1>
+            <p className="text-gray-600">
+              Gerenciamento de compras e licenças do sistema
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <Button
+              onClick={() => setShowAddMember(true)}
+              className="flex items-center justify-center space-x-2 text-sm"
+              size="sm"
+            >
+              <Plus size={16} />
+              <span>Adicionar Membro</span>
+            </Button>
+            <Button
+              onClick={goToSalesPage}
+              variant="outline"
+              className="flex items-center justify-center space-x-2 text-sm"
+              size="sm"
+            >
+              <ArrowRight size={16} />
+              <span>Página de Vendas</span>
+            </Button>
+            <Button
+              onClick={goToPdfGenerator}
+              variant="secondary"
+              className="flex items-center justify-center space-x-2 text-sm"
+              size="sm"
+            >
+              <FileText size={16} />
+              <span>Voltar ao Gerador</span>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -174,27 +222,39 @@ const AdminPanel = () => {
         />
       )}
 
+      {/* Modal para editar plano */}
+      {editingLicense && (
+        <EditPlanForm
+          license={editingLicense}
+          onClose={() => setEditingLicense(null)}
+          onSuccess={() => {
+            setEditingLicense(null);
+            loadAdminData();
+          }}
+        />
+      )}
+
       {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-sm font-medium text-gray-500">Total de Compras</h3>
-          <p className="text-2xl font-bold text-gray-900">{purchases.length}</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
+        <div className="bg-white p-4 md:p-6 rounded-lg shadow">
+          <h3 className="text-xs md:text-sm font-medium text-gray-500 mb-1">Total de Compras</h3>
+          <p className="text-lg md:text-2xl font-bold text-gray-900">{purchases.length}</p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-sm font-medium text-gray-500">Licenças Ativas</h3>
-          <p className="text-2xl font-bold text-green-600">
+        <div className="bg-white p-4 md:p-6 rounded-lg shadow">
+          <h3 className="text-xs md:text-sm font-medium text-gray-500 mb-1">Licenças Ativas</h3>
+          <p className="text-lg md:text-2xl font-bold text-green-600">
             {licenses.filter(l => l.status === 'active').length}
           </p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-sm font-medium text-gray-500">Planos Premium</h3>
-          <p className="text-2xl font-bold text-purple-600">
+        <div className="bg-white p-4 md:p-6 rounded-lg shadow">
+          <h3 className="text-xs md:text-sm font-medium text-gray-500 mb-1">Planos Premium</h3>
+          <p className="text-lg md:text-2xl font-bold text-purple-600">
             {licenses.filter(l => l.plan === 'premium').length}
           </p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-sm font-medium text-gray-500">Receita Total</h3>
-          <p className="text-2xl font-bold text-green-600">
+        <div className="bg-white p-4 md:p-6 rounded-lg shadow">
+          <h3 className="text-xs md:text-sm font-medium text-gray-500 mb-1">Receita Total</h3>
+          <p className="text-lg md:text-2xl font-bold text-green-600">
             R$ {purchases.reduce((sum, p) => sum + (p.amount || 0), 0).toFixed(2)}
           </p>
         </div>
@@ -202,30 +262,30 @@ const AdminPanel = () => {
 
       {/* Compras Recentes */}
       {purchases.length > 0 && (
-        <div className="bg-white rounded-lg shadow mb-8">
-          <div className="px-6 py-4 border-b">
-            <h2 className="text-xl font-semibold">Compras Recentes</h2>
+        <div className="bg-white rounded-lg shadow mb-6 md:mb-8 overflow-hidden">
+          <div className="px-4 md:px-6 py-4 border-b">
+            <h2 className="text-lg md:text-xl font-semibold">Compras Recentes</h2>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[600px]">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Email
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Produto
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Plano
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Valor
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Data
                   </th>
                 </tr>
@@ -233,13 +293,13 @@ const AdminPanel = () => {
               <tbody className="divide-y divide-gray-200">
                 {purchases.map((purchase) => (
                   <tr key={purchase.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-3 md:px-6 py-4 text-xs md:text-sm text-gray-900 break-all">
                       {purchase.email}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-3 md:px-6 py-4 text-xs md:text-sm text-gray-900">
                       {purchase.product_name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 md:px-6 py-4">
                       <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                         purchase.plan === 'premium' 
                           ? 'bg-purple-100 text-purple-800' 
@@ -248,10 +308,10 @@ const AdminPanel = () => {
                         {purchase.plan}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-3 md:px-6 py-4 text-xs md:text-sm text-gray-900">
                       R$ {(purchase.amount || 0).toFixed(2)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 md:px-6 py-4">
                       <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                         purchase.payment_status === 'approved' || purchase.payment_status === 'paid'
                           ? 'bg-green-100 text-green-800'
@@ -260,7 +320,7 @@ const AdminPanel = () => {
                         {purchase.payment_status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-3 md:px-6 py-4 text-xs md:text-sm text-gray-500">
                       {new Date(purchase.created_at).toLocaleDateString('pt-BR')}
                     </td>
                   </tr>
@@ -272,30 +332,30 @@ const AdminPanel = () => {
       )}
 
       {/* Gerenciamento de Licenças */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b">
-          <h2 className="text-xl font-semibold">Gerenciamento de Licenças</h2>
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="px-4 md:px-6 py-4 border-b">
+          <h2 className="text-lg md:text-xl font-semibold">Gerenciamento de Licenças</h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[700px]">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Email
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Plano
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   PDFs Gerados
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Expira em
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Ações
                 </th>
               </tr>
@@ -303,19 +363,21 @@ const AdminPanel = () => {
             <tbody className="divide-y divide-gray-200">
               {licenses.map((license) => (
                 <tr key={license.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-3 md:px-6 py-4 text-xs md:text-sm text-gray-900 break-all">
                     {license.email}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 md:px-6 py-4">
                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                       license.plan === 'premium' 
                         ? 'bg-purple-100 text-purple-800' 
+                        : license.plan === 'enterprise'
+                        ? 'bg-green-100 text-green-800'
                         : 'bg-blue-100 text-blue-800'
                     }`}>
                       {license.plan}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 md:px-6 py-4">
                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                       license.status === 'active'
                         ? 'bg-green-100 text-green-800'
@@ -326,29 +388,42 @@ const AdminPanel = () => {
                       {license.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {license.pdfs_generated}/{license.pdf_limit}
+                  <td className="px-3 md:px-6 py-4 text-xs md:text-sm text-gray-900">
+                    {license.pdfs_generated}/{license.pdf_limit === 999999 ? '∞' : license.pdf_limit}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-3 md:px-6 py-4 text-xs md:text-sm text-gray-500">
                     {new Date(license.expires_at).toLocaleDateString('pt-BR')}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                    {license.status === 'active' ? (
+                  <td className="px-3 md:px-6 py-4">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => updateLicenseStatus(license.id, 'suspended')}
+                        onClick={() => setEditingLicense(license)}
+                        className="flex items-center space-x-1 text-xs"
                       >
-                        Suspender
+                        <Edit size={12} />
+                        <span>Editar</span>
                       </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        onClick={() => updateLicenseStatus(license.id, 'active')}
-                      >
-                        Ativar
-                      </Button>
-                    )}
+                      {license.status === 'active' ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateLicenseStatus(license.id, 'suspended')}
+                          className="text-xs"
+                        >
+                          Suspender
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={() => updateLicenseStatus(license.id, 'active')}
+                          className="text-xs"
+                        >
+                          Ativar
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
