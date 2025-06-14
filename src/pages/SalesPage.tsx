@@ -4,13 +4,20 @@ import SalesFooter from '@/components/SalesFooter';
 import PricingSection from '@/components/PricingSection';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Check, Star, ArrowRight } from 'lucide-react';
+import { Check, Star, ArrowRight, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
 const SalesPage = () => {
+  const navigate = useNavigate();
+
   useEffect(() => {
     console.log('SalesPage component mounted');
   }, []);
+
+  const goToApp = () => {
+    navigate('/');
+  };
 
   const features = [
     'Geração de PDFs profissionais e personalizados',
@@ -45,6 +52,23 @@ const SalesPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <SalesHeader />
       
+      {/* Navigation Bar */}
+      <div className="bg-white shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold text-gray-900">FinanceFlow - Gerador de Orçamentos</h2>
+            <Button
+              onClick={goToApp}
+              variant="outline"
+              className="flex items-center space-x-2"
+            >
+              <ArrowLeft size={16} />
+              <span>Voltar ao Sistema</span>
+            </Button>
+          </div>
+        </div>
+      </div>
+      
       {/* Hero Section */}
       <section className="py-20 px-4">
         <div className="max-w-6xl mx-auto text-center">
@@ -57,12 +81,21 @@ const SalesPage = () => {
             Personalize, organize e impressione seus clientes com propostas profissionais.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-4">
+            <Button 
+              size="lg" 
+              className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-4"
+              onClick={goToApp}
+            >
               Começar Agora
               <ArrowRight className="ml-2" size={20} />
             </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8 py-4">
-              Ver Demonstração
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="text-lg px-8 py-4"
+              onClick={goToApp}
+            >
+              Acessar Sistema
             </Button>
           </div>
         </div>
@@ -128,8 +161,13 @@ const SalesPage = () => {
           <p className="text-xl text-blue-100 mb-8">
             Junte-se a centenas de empresas que já transformaram seus orçamentos
           </p>
-          <Button size="lg" variant="secondary" className="text-lg px-8 py-4">
-            Escolher Plano
+          <Button 
+            size="lg" 
+            variant="secondary" 
+            className="text-lg px-8 py-4"
+            onClick={goToApp}
+          >
+            Acessar Sistema
             <ArrowRight className="ml-2" size={20} />
           </Button>
         </div>

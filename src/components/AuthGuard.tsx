@@ -45,7 +45,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     return <LoginForm />;
   }
 
-  // Verificar se é admin
+  // Verificar se é admin - se for, mostrar painel admin
   if (user.email && ADMIN_EMAILS.includes(user.email)) {
     return <AdminPanel />;
   }

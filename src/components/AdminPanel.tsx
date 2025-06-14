@@ -1,8 +1,10 @@
+
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowRight, ArrowLeft, Plus } from 'lucide-react';
+import { ArrowRight, Plus, FileText } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import AddMemberForm from './AddMemberForm';
 
 interface Purchase {
@@ -31,6 +33,7 @@ const AdminPanel = () => {
   const [loading, setLoading] = useState(true);
   const [showAddMember, setShowAddMember] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadAdminData();
@@ -38,24 +41,35 @@ const AdminPanel = () => {
 
   const loadAdminData = async () => {
     try {
-      // Carregar compras recentes
+      console.log('Carregando dados administrativos...');
+      
+      // Carregar licenças primeiro
+      const { data: licensesData, error: licensesError } = await supabase
+        .from('user_licenses')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (licensesError) {
+        console.error('Erro ao carregar licenças:', licensesError);
+        throw licensesError;
+      }
+
+      console.log('Licenças carregadas:', licensesData);
+
+      // Tentar carregar compras (pode falhar se não houver políticas)
       const { data: purchasesData, error: purchasesError } = await supabase
         .from('purchases')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (purchasesError) throw purchasesError;
+      if (purchasesError) {
+        console.warn('Erro ao carregar compras (pode ser normal se não há dados):', purchasesError);
+        setPurchases([]);
+      } else {
+        setPurchases(purchasesData || []);
+      }
 
-      // Carregar licenças ativas
-      const { data: licensesData, error: licensesError } = await supabase
-        .from('user_licenses')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (licensesError) throw licensesError;
-
-      setPurchases(purchasesData || []);
       setLicenses(licensesData || []);
     } catch (error) {
       console.error('Erro ao carregar dados admin:', error);
@@ -85,6 +99,7 @@ const AdminPanel = () => {
 
       loadAdminData();
     } catch (error) {
+      console.error('Erro ao atualizar licença:', error);
       toast({
         title: 'Erro',
         description: 'Erro ao atualizar licença',
@@ -95,6 +110,10 @@ const AdminPanel = () => {
 
   const goToPdfGenerator = () => {
     window.location.href = '/';
+  };
+
+  const goToSalesPage = () => {
+    navigate('/vendas');
   };
 
   if (loading) {
@@ -125,12 +144,20 @@ const AdminPanel = () => {
             <span>Adicionar Membro</span>
           </Button>
           <Button
-            onClick={goToPdfGenerator}
+            onClick={goToSalesPage}
             variant="outline"
             className="flex items-center space-x-2"
           >
-            <ArrowLeft size={16} />
-            <span>Ir para Gerador de PDF</span>
+            <ArrowRight size={16} />
+            <span>Página de Vendas</span>
+          </Button>
+          <Button
+            onClick={goToPdfGenerator}
+            variant="default"
+            className="flex items-center space-x-2"
+          >
+            <FileText size={16} />
+            <span>Gerador de PDF</span>
           </Button>
         </div>
       </div>
@@ -173,73 +200,75 @@ const AdminPanel = () => {
       </div>
 
       {/* Compras Recentes */}
-      <div className="bg-white rounded-lg shadow mb-8">
-        <div className="px-6 py-4 border-b">
-          <h2 className="text-xl font-semibold">Compras Recentes</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Produto
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Plano
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Valor
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Data
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {purchases.map((purchase) => (
-                <tr key={purchase.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {purchase.email}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {purchase.product_name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      purchase.plan === 'premium' 
-                        ? 'bg-purple-100 text-purple-800' 
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {purchase.plan}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    R$ {(purchase.amount || 0).toFixed(2)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      purchase.payment_status === 'approved' || purchase.payment_status === 'paid'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {purchase.payment_status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(purchase.created_at).toLocaleDateString('pt-BR')}
-                  </td>
+      {purchases.length > 0 && (
+        <div className="bg-white rounded-lg shadow mb-8">
+          <div className="px-6 py-4 border-b">
+            <h2 className="text-xl font-semibold">Compras Recentes</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Produto
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Plano
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Valor
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Data
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {purchases.map((purchase) => (
+                  <tr key={purchase.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {purchase.email}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {purchase.product_name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        purchase.plan === 'premium' 
+                          ? 'bg-purple-100 text-purple-800' 
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {purchase.plan}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      R$ {(purchase.amount || 0).toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        purchase.payment_status === 'approved' || purchase.payment_status === 'paid'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {purchase.payment_status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(purchase.created_at).toLocaleDateString('pt-BR')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Gerenciamento de Licenças */}
       <div className="bg-white rounded-lg shadow">

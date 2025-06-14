@@ -1,18 +1,18 @@
+
 import BudgetForm from '@/components/BudgetForm';
 import UserDashboard from '@/components/UserDashboard';
-import AdminNavButton from '@/components/AdminNavButton';
 import { useLicenseValidation } from '@/hooks/useLicenseValidation';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
-
-const ADMIN_EMAILS = ['adm.financeflow@gmail.com', 'yuriadrskt@gmail.com'];
+import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const { license, loading } = useLicenseValidation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -20,7 +20,9 @@ const Index = () => {
     });
   }, []);
 
-  const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email);
+  const goToSalesPage = () => {
+    navigate('/vendas');
+  };
 
   if (loading) {
     return (
@@ -41,12 +43,20 @@ const Index = () => {
           <p className="text-gray-600 mb-6">
             Sua licença não está ativa ou expirou. Entre em contato com o suporte para renovar.
           </p>
-          <button
-            onClick={() => supabase.auth.signOut()}
-            className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
-          >
-            Sair
-          </button>
+          <div className="space-y-3">
+            <Button
+              onClick={goToSalesPage}
+              className="w-full bg-blue-600 text-white hover:bg-blue-700"
+            >
+              Ver Planos
+            </Button>
+            <button
+              onClick={() => supabase.auth.signOut()}
+              className="w-full bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
+            >
+              Sair
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -68,9 +78,15 @@ const Index = () => {
             <p className="text-sm text-gray-500">
               PDFs gerados: {license.pdfs_generated}/{license.pdf_limit}
             </p>
+            <Button
+              onClick={goToSalesPage}
+              className="w-full bg-blue-600 text-white hover:bg-blue-700"
+            >
+              Fazer Upgrade
+            </Button>
             <button
               onClick={() => supabase.auth.signOut()}
-              className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
+              className="w-full bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
             >
               Sair
             </button>
@@ -84,17 +100,19 @@ const Index = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
         <div className="mb-6 flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Gerador de Orçamentos
+          </h1>
+          
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.open('/vendas.html', '_blank')}
+            onClick={goToSalesPage}
             className="flex items-center space-x-2"
           >
             <span>Página de Vendas</span>
             <ExternalLink size={16} />
           </Button>
-          
-          {isAdmin && <AdminNavButton />}
         </div>
         
         {user && license && (
