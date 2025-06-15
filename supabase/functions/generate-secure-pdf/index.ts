@@ -84,7 +84,6 @@ async function generateSecurePDF(budgetData: any, userId: string, fingerprint: s
   try {
     console.log('Iniciando geração do PDF seguro...');
     
-    // Mapeamento das cores dos temas
     const COLOR_THEMES = {
       blue: { r: 0.16, g: 0.50, b: 0.73 },
       green: { r: 0.09, g: 0.63, b: 0.52 },
@@ -93,7 +92,6 @@ async function generateSecurePDF(budgetData: any, userId: string, fingerprint: s
       orange: { r: 0.90, g: 0.49, b: 0.13 }
     };
     
-    // Usar a cor do tema selecionado ou azul como padrão
     const selectedColor = COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES] || COLOR_THEMES.blue;
     
     console.log('Usando cor do tema:', budgetData.colorTheme, selectedColor);
@@ -106,27 +104,25 @@ async function generateSecurePDF(budgetData: any, userId: string, fingerprint: s
 
     const watermark = `ID: ${userId.slice(-8)} | FP: ${fingerprint} | ${new Date().toISOString()}`;
     
-    // Melhorar formatação dos itens para nova estética
-    const itemsContent = budgetData.items.map((item: any, index: number) => {
-      const description = item.description.length > 35 ? item.description.substring(0, 35) + '...' : item.description;
-      return `${description.padEnd(40)} ${item.quantity.toString().padEnd(3)} R$ ${item.unitPrice.toFixed(2).padStart(8)} R$ ${item.total.toFixed(2).padStart(10)}`;
+    const itemsContent = budgetData.items.map((item: any) => {
+      const description = item.description.length > 40 ? item.description.substring(0, 37) + '...' : item.description;
+      return `${description.padEnd(43)} ${item.quantity.toString().padEnd(4)} R$ ${item.unitPrice.toFixed(2).padStart(10)} R$ ${item.total.toFixed(2).padStart(12)}`;
     }).join('\n');
 
-    // Truncar textos longos para evitar problemas
-    const companyName = budgetData.companyInfo.name.substring(0, 40);
-    const companyEmail = budgetData.companyInfo.email.substring(0, 40);
-    const companyPhone = budgetData.companyInfo.phone.substring(0, 25);
-    const companyAddress = (budgetData.companyInfo.address || '').substring(0, 60);
+    const companyName = budgetData.companyInfo.name.substring(0, 50);
+    const companyEmail = budgetData.companyInfo.email.substring(0, 50);
+    const companyPhone = budgetData.companyInfo.phone.substring(0, 20);
+    const companyAddress = (budgetData.companyInfo.address || '').substring(0, 80);
 
-    const clientName = budgetData.clientInfo.name.substring(0, 40);
-    const clientEmail = budgetData.clientInfo.email.substring(0, 40);
-    const clientPhone = budgetData.clientInfo.phone.substring(0, 25);
-    const clientAddress = (budgetData.clientInfo.address || '').substring(0, 60);
+    const clientName = budgetData.clientInfo.name.substring(0, 50);
+    const clientEmail = budgetData.clientInfo.email.substring(0, 50);
+    const clientPhone = budgetData.clientInfo.phone.substring(0, 20);
+    const clientAddress = (budgetData.clientInfo.address || '').substring(0, 80);
 
-    const specialConditions = (budgetData.specialConditions || 'Pagamento em até 30 dias após aprovação do orçamento.').substring(0, 100);
-    const observations = (budgetData.observations || 'Estamos à disposição para esclarecimentos adicionais.').substring(0, 100);
+    const specialConditions = (budgetData.specialConditions || 'Pagamento em ate 30 dias apos aprovacao do orcamento.').substring(0, 200);
+    const observations = (budgetData.observations || 'Estamos a disposicao para esclarecimentos adicionais.').substring(0, 200);
 
-    const contentLength = 3000 + itemsContent.length + companyName.length + clientName.length + specialConditions.length + observations.length;
+    const contentLength = 3500 + itemsContent.length;
 
     const pdfTemplate = `%PDF-1.4
 1 0 obj
@@ -173,34 +169,29 @@ Q
 BT
 1 1 1 rg
 /F1 18 Tf
-20 780 Td
+30 775 Td
 (${companyName.toUpperCase()}) Tj
-0 -13 Td
-/F1 24 Tf
+/F1 20 Tf
+450 775 Td
 (ORCAMENTO) Tj
-ET
-
-BT
-1 1 1 rg
 /F2 10 Tf
-552 780 Td
+30 758 Td
 (Data: ${currentDate}) Tj
-0 -7 Td
+450 758 Td
 (No: ${budgetNumber}) Tj
 ET
 
 q
-${selectedColor.r * 0.1} ${selectedColor.g * 0.1} ${selectedColor.b * 0.1} rg
-20 715 572 15 re
+0.9 0.9 0.9 rg
+20 720 572 1 re
 f
 Q
 
 BT
-${selectedColor.r} ${selectedColor.g} ${selectedColor.b} rg
-/F1 12 Tf
-25 723 Td
-(DADOS DA EMPRESA) Tj
 0 0 0 rg
+/F1 12 Tf
+25 705 Td
+(DADOS DA EMPRESA) Tj
 /F2 10 Tf
 0 -15 Td
 (Empresa: ${companyName}) Tj
@@ -213,17 +204,16 @@ ${selectedColor.r} ${selectedColor.g} ${selectedColor.b} rg
 ET
 
 q
-${selectedColor.r * 0.1} ${selectedColor.g * 0.1} ${selectedColor.b * 0.1} rg
-20 630 572 15 re
+0.9 0.9 0.9 rg
+20 620 572 1 re
 f
 Q
 
 BT
-${selectedColor.r} ${selectedColor.g} ${selectedColor.b} rg
-/F1 12 Tf
-25 638 Td
-(DADOS DO CLIENTE) Tj
 0 0 0 rg
+/F1 12 Tf
+25 605 Td
+(DADOS DO CLIENTE) Tj
 /F2 10 Tf
 0 -15 Td
 (Cliente: ${clientName}) Tj
@@ -236,139 +226,82 @@ ${selectedColor.r} ${selectedColor.g} ${selectedColor.b} rg
 ET
 
 q
-${selectedColor.r * 0.1} ${selectedColor.g * 0.1} ${selectedColor.b * 0.1} rg
-20 535 572 15 re
-f
-Q
-
-BT
-${selectedColor.r} ${selectedColor.g} ${selectedColor.b} rg
-/F1 12 Tf
-25 543 Td
-(NOSSA PROPOSTA PARA VOCE) Tj
-0 0 0 rg
-/F1 10 Tf
-0 -18 Td
-(Prezado(a) ${clientName},) Tj
-/F2 10 Tf
-0 -15 Td
-(E com grande satisfacao que apresentamos nossa proposta personalizada para suas) Tj
-0 -12 Td
-(necessidades. Nossa empresa se destaca pela qualidade excepcional, atendimento diferenciado e) Tj
-0 -12 Td
-(compromisso com a excelencia em cada projeto que realizamos.) Tj
-0 -18 Td
-(Confiamos que nossa proposta atendera perfeitamente as suas expectativas, oferecendo a melhor) Tj
-0 -12 Td
-(relacao custo-beneficio do mercado.) Tj
-ET
-
-q
-${selectedColor.r * 0.1} ${selectedColor.g * 0.1} ${selectedColor.b * 0.1} rg
-20 380 572 15 re
-f
-Q
-
-BT
-${selectedColor.r} ${selectedColor.g} ${selectedColor.b} rg
-/F1 12 Tf
-25 388 Td
-(DETALHAMENTO DOS SERVICOS) Tj
-0 0 0 rg
-/F1 9 Tf
-0 -18 Td
-(DESCRICAO                            QTD  PRECO UNIT.    TOTAL) Tj
-0 -15 Td
-/F2 9 Tf
-(${itemsContent}) Tj
-0 -30 Td
-
-420 0 Td
 0.9 0.9 0.9 rg
--405 -5 65 12 re
+20 520 572 1 re
 f
-0.8 0.8 0.8 RG
--405 -5 65 12 re
-S
-0 0 0 rg
-/F2 10 Tf
--400 -1 Td
-(Subtotal: R$ ${subtotal.toFixed(2)}) Tj
+Q
 
-0 -25 Td
-${selectedColor.r * 0.1} ${selectedColor.g * 0.1} ${selectedColor.b * 0.1} rg
--405 -8 65 18 re
-f
-${selectedColor.r} ${selectedColor.g} ${selectedColor.b} RG
-2 w
--405 -8 65 18 re
-S
-${selectedColor.r} ${selectedColor.g} ${selectedColor.b} rg
-/F1 14 Tf
--400 -1 Td
-(TOTAL FINAL:) Tj
-0 -6 Td
-(R$ ${total.toFixed(2)}) Tj
+BT
 0 0 0 rg
--420 -35 Td
-
+/F1 12 Tf
+25 505 Td
+(ITENS DO ORCAMENTO) Tj
 /F2 9 Tf
-(Validade: ${budgetData.validityDays || 30} dias) Tj
+0 -15 Td
+(DESCRICAO                                    QTD   PRECO UNIT.        TOTAL) Tj
+0 -12 Td
+(${itemsContent}) Tj
 ET
-
-q
-${selectedColor.r * 0.1} ${selectedColor.g * 0.1} ${selectedColor.b * 0.1} rg
-20 170 572 15 re
-f
-Q
 
 BT
-${selectedColor.r} ${selectedColor.g} ${selectedColor.b} rg
-/F1 12 Tf
-25 178 Td
-(CONDICOES ESPECIAIS) Tj
 0 0 0 rg
 /F2 10 Tf
+450 ${400 - budgetData.items.length * 12} Td
+(Subtotal: R$ ${subtotal.toFixed(2)}) Tj
 0 -15 Td
-(${specialConditions}) Tj
-ET
-
-q
-${selectedColor.r * 0.1} ${selectedColor.g * 0.1} ${selectedColor.b * 0.1} rg
-20 125 572 15 re
-f
-Q
-
-BT
-${selectedColor.r} ${selectedColor.g} ${selectedColor.b} rg
-/F1 12 Tf
-25 133 Td
-(OBSERVACOES) Tj
-0 0 0 rg
-/F2 10 Tf
-0 -15 Td
-(${observations}) Tj
+${budgetData.discount > 0 ? `(Desconto ${budgetData.discount}%: -R$ ${desconto.toFixed(2)}) Tj\n0 -15 Td\n` : ''}
 ET
 
 q
 ${selectedColor.r} ${selectedColor.g} ${selectedColor.b} rg
-20 70 572 25 re
+400 ${370 - budgetData.items.length * 12} 180 25 re
 f
 Q
 
 BT
 1 1 1 rg
-/F1 16 Tf
-25 88 Td
-(PRONTO PARA COMECAR?) Tj
-/F2 10 Tf
-0 -8 Td
-(Este orcamento tem validade de ${budgetData.validityDays || 30} dias. Entre em contato conosco para confirmar o pedido!) Tj
-0 0 0 rg
-0 -25 Td
+/F1 14 Tf
+410 ${380 - budgetData.items.length * 12} Td
+(TOTAL: R$ ${total.toFixed(2)}) Tj
+ET
 
-/F2 7 Tf
+q
+0.9 0.9 0.9 rg
+20 ${320 - budgetData.items.length * 12} 572 1 re
+f
+Q
+
+BT
+0 0 0 rg
+/F1 12 Tf
+25 ${305 - budgetData.items.length * 12} Td
+(CONDICOES ESPECIAIS) Tj
+/F2 10 Tf
+0 -15 Td
+(${specialConditions}) Tj
+ET
+
+BT
+0 0 0 rg
+/F1 12 Tf
+25 ${250 - budgetData.items.length * 12} Td
+(OBSERVACOES) Tj
+/F2 10 Tf
+0 -15 Td
+(${observations}) Tj
+ET
+
+BT
+0 0 0 rg
+/F2 10 Tf
+25 ${200 - budgetData.items.length * 12} Td
+(Validade: ${budgetData.validityDays || 30} dias) Tj
+ET
+
+BT
 0.5 0.5 0.5 rg
+/F2 7 Tf
+25 30 Td
 (${watermark}) Tj
 ET
 endstream
@@ -397,15 +330,15 @@ xref
 0000000058 00000 n 
 0000000115 00000 n 
 0000000273 00000 n 
-0000003400 00000 n 
-0000003468 00000 n 
+0000003900 00000 n 
+0000003968 00000 n 
 trailer
 <<
 /Size 7
 /Root 1 0 R
 >>
 startxref
-3531
+4031
 %%EOF`;
 
     console.log('PDF gerado com sucesso');
