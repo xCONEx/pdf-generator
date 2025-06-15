@@ -9,13 +9,13 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-// Cores que funcionam 100%
+// Cores RGB que funcionam 100%
 const WORKING_COLORS = {
-  blue: { r: 0.23, g: 0.51, b: 0.96 },
-  green: { r: 0.06, g: 0.73, b: 0.51 },
-  orange: { r: 0.96, g: 0.62, b: 0.04 },
-  purple: { r: 0.55, g: 0.36, b: 0.96 },
-  red: { r: 0.94, g: 0.27, b: 0.27 }
+  blue: { r: 0.16, g: 0.50, b: 0.73 },
+  green: { r: 0.15, g: 0.68, b: 0.38 },
+  orange: { r: 0.90, g: 0.49, b: 0.13 },
+  purple: { r: 0.56, g: 0.27, b: 0.68 },
+  red: { r: 0.91, g: 0.30, b: 0.24 }
 };
 
 serve(async (req) => {
@@ -93,7 +93,6 @@ async function generateSecurePDF(budgetData: any, userId: string, fingerprint: s
   try {
     console.log('Iniciando geração do PDF seguro...');
     
-    // Selecionar cor funcional
     const selectedTheme = budgetData.colorTheme || 'blue';
     const color = WORKING_COLORS[selectedTheme as keyof typeof WORKING_COLORS] || WORKING_COLORS.blue;
     
@@ -108,10 +107,21 @@ async function generateSecurePDF(budgetData: any, userId: string, fingerprint: s
     
     const itemsContent = budgetData.items.map((item: any, index: number) => {
       const desc = item.description.length > 30 ? item.description.substring(0, 30) + '...' : item.description;
-      return `${(index + 1).toString().padEnd(3)} ${desc.padEnd(30)} ${item.quantity.toString().padEnd(4)} R$ ${item.unitPrice.toFixed(2).padStart(8)} R$ ${item.total.toFixed(2).padStart(10)}`;
+      return `${(index + 1).toString().padEnd(3)} ${desc.padEnd(35)} ${item.quantity.toString().padEnd(4)} R$ ${item.unitPrice.toFixed(2).padStart(8)} R$ ${item.total.toFixed(2).padStart(10)}`;
     }).join('\n');
 
-    // Template PDF funcional
+    const companyName = budgetData.companyInfo.name.substring(0, 50);
+    const companyEmail = budgetData.companyInfo.email.substring(0, 45);
+    const companyPhone = budgetData.companyInfo.phone.substring(0, 30);
+    const companyAddress = (budgetData.companyInfo.address || '').substring(0, 45);
+
+    const clientName = budgetData.clientInfo.name.substring(0, 50);
+    const clientEmail = budgetData.clientInfo.email.substring(0, 45);
+    const clientPhone = budgetData.clientInfo.phone.substring(0, 30);
+    const clientAddress = (budgetData.clientInfo.address || '').substring(0, 45);
+
+    const contentLength = 2000 + itemsContent.length + companyName.length + clientName.length;
+
     const pdfTemplate = `%PDF-1.4
 1 0 obj
 <<
@@ -145,99 +155,99 @@ endobj
 
 4 0 obj
 <<
-/Length ${1800 + itemsContent.length}
+/Length ${contentLength}
 >>
 stream
 q
 ${color.r} ${color.g} ${color.b} rg
-0 765 612 27 re
+0 760 612 32 re
 f
 Q
 
 BT
 1 1 1 rg
-/F1 18 Tf
-50 775 Td
+/F1 20 Tf
+20 775 Td
 (ORCAMENTO PROFISSIONAL - ${budgetNumber}) Tj
-0 -8 Td
+0 -10 Td
 /F2 10 Tf
 (Data: ${new Date().toLocaleDateString('pt-BR')}) Tj
 ET
 
 q
 ${color.r} ${color.g} ${color.b} rg
-50 720 512 20 re
+20 715 572 15 re
 f
 Q
 
 BT
 1 1 1 rg
 /F1 12 Tf
-55 730 Td
+25 723 Td
 (DADOS DA EMPRESA) Tj
 0 0 0 rg
 /F2 10 Tf
-0 -18 Td
-(${budgetData.companyInfo.name.substring(0, 50)}) Tj
+0 -20 Td
+(${companyName}) Tj
 0 -12 Td
-(Email: ${budgetData.companyInfo.email.substring(0, 45)}) Tj
+(Email: ${companyEmail}) Tj
 0 -12 Td
-(Telefone: ${budgetData.companyInfo.phone.substring(0, 30)}) Tj
+(Telefone: ${companyPhone}) Tj
 0 -12 Td
-(Endereco: ${(budgetData.companyInfo.address || '').substring(0, 45)}) Tj
+(Endereco: ${companyAddress}) Tj
 ET
 
 q
 ${color.r} ${color.g} ${color.b} rg
-50 620 512 20 re
+20 615 572 15 re
 f
 Q
 
 BT
 1 1 1 rg
 /F1 12 Tf
-55 630 Td
+25 623 Td
 (DADOS DO CLIENTE) Tj
 0 0 0 rg
 /F2 10 Tf
-0 -18 Td
-(${budgetData.clientInfo.name.substring(0, 50)}) Tj
+0 -20 Td
+(${clientName}) Tj
 0 -12 Td
-(Email: ${budgetData.clientInfo.email.substring(0, 45)}) Tj
+(Email: ${clientEmail}) Tj
 0 -12 Td
-(Telefone: ${budgetData.clientInfo.phone.substring(0, 30)}) Tj
+(Telefone: ${clientPhone}) Tj
 0 -12 Td
-(Endereco: ${(budgetData.clientInfo.address || '').substring(0, 45)}) Tj
+(Endereco: ${clientAddress}) Tj
 ET
 
 q
 ${color.r} ${color.g} ${color.b} rg
-50 515 512 20 re
+20 515 572 15 re
 f
 Q
 
 BT
 1 1 1 rg
 /F1 12 Tf
-55 525 Td
+25 523 Td
 (ITENS DO ORCAMENTO) Tj
 0 0 0 rg
 /F2 9 Tf
-0 -18 Td
-(Item Descricao                     Qtd  Preco Unit.  Total) Tj
+0 -20 Td
+(Item Descricao                           Qtd  Preco Unit.  Total) Tj
 0 -15 Td
 (${itemsContent}) Tj
-0 -25 Td
+0 -30 Td
 
 q
 ${color.r} ${color.g} ${color.b} RG
 2 w
-380 0 180 80 re
+400 0 180 90 re
 S
 Q
 
 /F1 11 Tf
-385 75 Td
+405 85 Td
 (Subtotal: R$ ${subtotal.toFixed(2)}) Tj
 0 -15 Td
 (Desconto: R$ ${desconto.toFixed(2)}) Tj
@@ -246,7 +256,7 @@ ${color.r} ${color.g} ${color.b} rg
 /F1 14 Tf
 (TOTAL: R$ ${total.toFixed(2)}) Tj
 0 0 0 rg
-0 -30 Td
+0 -35 Td
 
 /F2 9 Tf
 (Validade: ${budgetData.validityDays || 30} dias) Tj
@@ -258,16 +268,16 @@ ET
 
 q
 ${color.r} ${color.g} ${color.b} rg
-50 120 512 30 re
+20 120 572 30 re
 f
 Q
 
 BT
 1 1 1 rg
 /F1 14 Tf
-55 138 Td
+25 138 Td
 (ACEITA NOSSO ORCAMENTO?) Tj
-/F2 9 Tf
+/F2 10 Tf
 0 -12 Td
 (Entre em contato conosco para finalizar!) Tj
 0 0 0 rg
@@ -303,15 +313,15 @@ xref
 0000000058 00000 n 
 0000000115 00000 n 
 0000000273 00000 n 
-0000002200 00000 n 
-0000002268 00000 n 
+0000002400 00000 n 
+0000002468 00000 n 
 trailer
 <<
 /Size 7
 /Root 1 0 R
 >>
 startxref
-2331
+2531
 %%EOF`;
 
     console.log('PDF gerado com sucesso');

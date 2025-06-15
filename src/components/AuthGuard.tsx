@@ -75,34 +75,16 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
   if (isAdmin) {
     return (
       <div>
-        <div className="fixed top-4 right-4 z-50 flex gap-2">
+        <div className="fixed top-4 right-4 z-50">
           <AdminNavButton onAdminPanel={() => setShowAdminPanel(true)} />
-          <button
-            onClick={() => supabase.auth.signOut()}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm"
-          >
-            Sair
-          </button>
         </div>
         {children}
       </div>
     );
   }
 
-  // Para usuários não-admin, renderizar os children normalmente com botão de logout
-  return (
-    <>
-      <div className="fixed top-4 right-4 z-50">
-        <button
-          onClick={() => supabase.auth.signOut()}
-          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm"
-        >
-          Sair
-        </button>
-      </div>
-      {children}
-    </>
-  );
+  // Para usuários não-admin, renderizar os children normalmente
+  return <>{children}</>;
 };
 
 export default AuthGuard;
