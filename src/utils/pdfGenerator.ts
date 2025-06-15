@@ -29,7 +29,25 @@ export const generatePDF = async (budgetData: BudgetData) => {
 
     // Método de geração padrão
     const pdf = new jsPDF();
-    const theme = COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES] || COLOR_THEMES.blue;
+    
+    // Definir cores baseadas na customização
+    let theme;
+    if (budgetData.advancedCustomization) {
+      theme = {
+        primary: budgetData.advancedCustomization.customColors.primary,
+        secondary: budgetData.advancedCustomization.customColors.secondary,
+        accent: budgetData.advancedCustomization.customColors.accent,
+        text: budgetData.advancedCustomization.customColors.text
+      };
+    } else if (budgetData.exclusiveTemplate) {
+      theme = budgetData.exclusiveTemplate.colorScheme;
+    } else if (budgetData.premiumTemplate) {
+      theme = budgetData.premiumTemplate.colorScheme;
+    } else {
+      theme = COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES] || COLOR_THEMES.blue;
+    }
+
+    console.log('Usando tema de cores no PDF:', theme);
     
     // Configurações para A4
     const pageWidth = 210;
@@ -38,6 +56,19 @@ export const generatePDF = async (budgetData: BudgetData) => {
     const contentWidth = pageWidth - 2 * margin;
     let yPosition = 30;
     let currentPage = 1;
+
+    // Função para converter hex para RGB
+    const hexToRgb = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : { r: 59, g: 130, b: 246 }; // fallback para azul
+    };
+
+    const primaryRgb = hexToRgb(theme.primary);
+    const secondaryRgb = hexToRgb(theme.secondary);
 
     // Função para verificar se precisa de nova página
     const checkPageBreak = (spaceNeeded: number) => {
@@ -53,12 +84,8 @@ export const generatePDF = async (budgetData: BudgetData) => {
 
     // Função para adicionar cabeçalho em cada página
     const addPageHeader = () => {
-      // Cabeçalho com cor do tema
-      pdf.setFillColor(
-        parseInt(theme.primary.slice(1, 3), 16),
-        parseInt(theme.primary.slice(3, 5), 16),
-        parseInt(theme.primary.slice(5, 7), 16)
-      );
+      // Cabeçalho com cor do tema personalizada
+      pdf.setFillColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
       pdf.rect(0, 0, pageWidth, 25, 'F');
       
       pdf.setTextColor(255, 255, 255);
@@ -94,19 +121,19 @@ export const generatePDF = async (budgetData: BudgetData) => {
 
     // Função para adicionar seção com fundo colorido
     const addSection = (title: string, yPos: number) => {
-      pdf.setFillColor(240, 248, 255);
+      // Usar cor de accent personalizada ou fallback
+      const accentRgb = theme.accent ? hexToRgb(theme.accent) : { r: 219, g: 234, b: 254 };
+      pdf.setFillColor(accentRgb.r, accentRgb.g, accentRgb.b);
       pdf.rect(margin, yPos - 5, contentWidth, 12, 'F');
       
-      pdf.setTextColor(
-        parseInt(theme.primary.slice(1, 3), 16),
-        parseInt(theme.primary.slice(3, 5), 16),
-        parseInt(theme.primary.slice(5, 7), 16)
-      );
+      pdf.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
       pdf.setFontSize(14);
       pdf.setFont('helvetica', 'bold');
       pdf.text(title, margin + 2, yPos + 3);
       
-      pdf.setTextColor(0, 0, 0);
+      // Usar cor de texto personalizada se disponível
+      const textRgb = theme.text ? hexToRgb(theme.text) : { r: 0, g: 0, b: 0 };
+      pdf.setTextColor(textRgb.r, textRgb.g, textRgb.b);
     };
 
     // Função para adicionar texto com quebra de linha automática
@@ -190,7 +217,8 @@ Confiamos que nossa proposta atenderá perfeitamente às suas expectativas, ofer
     pdf.setDrawColor(200, 200, 200);
     pdf.rect(margin, yPosition - 5, contentWidth, 10);
     
-    pdf.setTextColor(0, 0, 0);
+    const textRgb = theme.text ? hexToRgb(theme.text) : { r: 0, g: 0, b: 0 };
+    pdf.setTextColor(textRgb.r, textRgb.g, textRgb.b);
     pdf.setFontSize(9);
     pdf.setFont('helvetica', 'bold');
     
@@ -236,16 +264,12 @@ Confiamos que nossa proposta atenderá perfeitamente às suas expectativas, ofer
     checkPageBreak(40);
     
     pdf.setFillColor(248, 249, 250);
-    pdf.setDrawColor(
-      parseInt(theme.primary.slice(1, 3), 16),
-      parseInt(theme.primary.slice(3, 5), 16),
-      parseInt(theme.primary.slice(5, 7), 16)
-    );
+    pdf.setDrawColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
     pdf.rect(margin + 80, yPosition, contentWidth - 80, 35, 'FD');
     
     pdf.setFontSize(11);
     pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(0, 0, 0);
+    pdf.setTextColor(textRgb.r, textRgb.g, textRgb.b);
     
     pdf.text('Subtotal:', margin + 85, yPosition + 8);
     pdf.text(`R$ ${subtotal.toFixed(2)}`, margin + 130, yPosition + 8);
@@ -257,15 +281,11 @@ Confiamos que nossa proposta atenderá perfeitamente às suas expectativas, ofer
 
     const totalFinal = subtotal - (subtotal * budgetData.discount / 100);
     pdf.setFontSize(14);
-    pdf.setTextColor(
-      parseInt(theme.primary.slice(1, 3), 16),
-      parseInt(theme.primary.slice(3, 5), 16),
-      parseInt(theme.primary.slice(5, 7), 16)
-    );
+    pdf.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
     pdf.text('TOTAL FINAL:', margin + 85, yPosition + 28);
     pdf.text(`R$ ${totalFinal.toFixed(2)}`, margin + 130, yPosition + 28);
     
-    pdf.setTextColor(0, 0, 0);
+    pdf.setTextColor(textRgb.r, textRgb.g, textRgb.b);
     yPosition += 45;
 
     // Condições especiais
@@ -288,11 +308,7 @@ Confiamos que nossa proposta atenderá perfeitamente às suas expectativas, ofer
 
     // Chamada para ação
     checkPageBreak(40);
-    pdf.setFillColor(
-      parseInt(theme.primary.slice(1, 3), 16),
-      parseInt(theme.primary.slice(3, 5), 16),
-      parseInt(theme.primary.slice(5, 7), 16)
-    );
+    pdf.setFillColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
     pdf.rect(margin, yPosition - 5, contentWidth, 35, 'F');
     
     pdf.setTextColor(255, 255, 255);
@@ -305,7 +321,7 @@ Confiamos que nossa proposta atenderá perfeitamente às suas expectativas, ofer
     const ctaText = `Este orçamento tem validade de ${budgetData.validityDays} dias. Entre em contato conosco para confirmar o pedido!`;
     addWrappedText(ctaText, margin + 5, yPosition + 18, contentWidth - 10);
     
-    pdf.setTextColor(0, 0, 0);
+    pdf.setTextColor(textRgb.r, textRgb.g, textRgb.b);
     yPosition += 45;
 
     // Rodapé
