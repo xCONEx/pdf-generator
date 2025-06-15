@@ -52,7 +52,14 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
 
   // Se é admin e quer ver o painel admin
   if (isAdmin && showAdminPanel) {
-    return <AdminPanel />;
+    return (
+      <div>
+        <div className="fixed top-4 right-4 z-50">
+          <AdminNavButton onBack={() => setShowAdminPanel(false)} />
+        </div>
+        <AdminPanel />
+      </div>
+    );
   }
 
   // Se é admin mas não está no painel admin, mostrar o gerador com botão para admin
