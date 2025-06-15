@@ -1,3 +1,4 @@
+
 export interface CompanyInfo {
   name: string;
   logo?: File;
@@ -51,7 +52,7 @@ export interface SavedBudget {
   updated_at: string;
 }
 
-// Removendo cores personalizadas temporariamente, mantendo apenas azul padrão
+// Cores padrão restauradas
 export const COLOR_THEMES = {
   blue: {
     primary: '#2980B9',
@@ -59,5 +60,33 @@ export const COLOR_THEMES = {
     accent: '#DBEAFE',
     text: '#000000',
     gradient: 'from-blue-500 to-blue-600'
+  },
+  green: {
+    primary: '#16A085',
+    secondary: '#059669',
+    accent: '#D1FAE5',
+    text: '#000000',
+    gradient: 'from-green-500 to-green-600'
+  },
+  purple: {
+    primary: '#8E44AD',
+    secondary: '#7C3AED',
+    accent: '#EDE9FE',
+    text: '#000000',
+    gradient: 'from-purple-500 to-purple-600'
+  },
+  red: {
+    primary: '#E74C3C',
+    secondary: '#DC2626',
+    accent: '#FEE2E2',
+    text: '#000000',
+    gradient: 'from-red-500 to-red-600'
+  },
+  orange: {
+    primary: '#E67E22',
+    secondary: '#EA580C',
+    accent: '#FED7AA',
+    text: '#000000',
+    gradient: 'from-orange-500 to-orange-600'
   }
 };

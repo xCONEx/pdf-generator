@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +15,6 @@ import { useLicenseValidation } from '@/hooks/useLicenseValidation';
 import PremiumFeatures from './premium/PremiumFeatures';
 import { PremiumTemplate } from './premium/TemplateSelector';
 import { AdvancedCustomizationOptions } from './premium/AdvancedCustomization';
-import ExclusiveTemplates, { ExclusiveTemplate } from './premium/ExclusiveTemplates';
 import AdvancedAnalytics from './premium/AdvancedAnalytics';
 import PriceInput from './PriceInput';
 
@@ -48,11 +46,9 @@ const BudgetForm = () => {
 
   const [logoPreview, setLogoPreview] = useState<string>('');
   const [showClientModal, setShowClientModal] = useState(false);
-  const [showExclusiveTemplates, setShowExclusiveTemplates] = useState(false);
   const [showAdvancedAnalytics, setShowAdvancedAnalytics] = useState(false);
   const [showAllPremiumFeatures, setShowAllPremiumFeatures] = useState(false);
   const [selectedPremiumTemplate, setSelectedPremiumTemplate] = useState<PremiumTemplate | null>(null);
-  const [selectedExclusiveTemplate, setSelectedExclusiveTemplate] = useState<ExclusiveTemplate | null>(null);
   const [advancedCustomization, setAdvancedCustomization] = useState<AdvancedCustomizationOptions | null>(null);
   const [isHoveringLogo, setIsHoveringLogo] = useState(false);
 
@@ -171,8 +167,6 @@ const BudgetForm = () => {
       const enhancedBudgetData = {
         ...budgetData,
         premiumTemplate: selectedPremiumTemplate,
-        exclusiveTemplate: selectedExclusiveTemplate,
-        advancedCustomization: advancedCustomization
       };
 
       await generatePDF(enhancedBudgetData);
@@ -190,69 +184,17 @@ const BudgetForm = () => {
     }
   };
 
-  const handleExclusiveTemplateSelect = (template: ExclusiveTemplate) => {
-    if (license?.plan !== 'enterprise') {
-      toast({
-        title: "Funcionalidade Premium",
-        description: "Templates exclusivos disponíveis apenas no plano Enterprise.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setSelectedExclusiveTemplate(template);
-    setSelectedPremiumTemplate(null);
-    setBudgetData(prev => ({ ...prev, colorTheme: 'custom' }));
-    toast({
-      title: "Template Exclusivo Aplicado",
-      description: `Template exclusivo "${template.name}" foi aplicado ao orçamento.`,
-    });
-  };
-
-  const handleAdvancedCustomizationChange = (options: AdvancedCustomizationOptions) => {
-    setAdvancedCustomization(options);
-    toast({
-      title: "Personalização Aplicada",
-      description: "Suas configurações personalizadas foram aplicadas.",
-    });
-  };
-
-  const handleLoadBudgetFromBackup = (loadedBudgetData: BudgetData) => {
-    setBudgetData(loadedBudgetData);
-  };
-
   const getThemeGradient = () => {
     if (advancedCustomization) {
       return `from-[${advancedCustomization.customColors.primary}] to-[${advancedCustomization.customColors.secondary}]`;
     }
 
-    if (selectedExclusiveTemplate) {
-      return selectedExclusiveTemplate.colorScheme.gradient;
-    }
-
-    switch (budgetData.colorTheme) {
-      case 'blue':
-        return 'from-blue-500 to-blue-600';
-      case 'green':
-        return 'from-green-500 to-green-600';
-      case 'purple':
-        return 'from-purple-500 to-purple-600';
-      case 'red':
-        return 'from-red-500 to-red-600';
-      case 'orange':
-        return 'from-orange-500 to-orange-600';
-      default:
-        return 'from-blue-500 to-blue-600';
-    }
+    return COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES]?.gradient || 'from-blue-500 to-blue-600';
   };
 
   const getCurrentThemeColor = () => {
     if (advancedCustomization) {
       return advancedCustomization.customColors.primary;
-    }
-
-    if (selectedExclusiveTemplate) {
-      return selectedExclusiveTemplate.colorScheme.primary;
     }
 
     if (selectedPremiumTemplate) {
@@ -269,9 +211,7 @@ const BudgetForm = () => {
         accent: advancedCustomization.customColors.accent,
         text: advancedCustomization.customColors.text
       }
-    : selectedExclusiveTemplate
-      ? selectedExclusiveTemplate.colorScheme
-      : selectedPremiumTemplate
+    : selectedPremiumTemplate
         ? selectedPremiumTemplate.colorScheme
         : COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES];
 
@@ -303,37 +243,10 @@ const BudgetForm = () => {
           </div>
         </div>
 
-        {/* CARDS PREMIUM - Responsivos */}
-        {hasAccessToPremium && !showExclusiveTemplates && !showAdvancedAnalytics && !showAllPremiumFeatures && (
+        {/* CARDS PREMIUM - Responsivos (removido Templates Exclusivos temporariamente) */}
+        {hasAccessToPremium && !showAdvancedAnalytics && !showAllPremiumFeatures && (
           <div className="mb-6 sm:mb-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              <Card
-                className="hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-yellow-300 bg-gradient-to-br from-yellow-50 to-purple-50 hover:scale-105"
-                onClick={() => setShowExclusiveTemplates(true)}
-              >
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500" />
-                    <span className="truncate">Templates Exclusivos</span>
-                    <Crown className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 flex-shrink-0" />
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-xs sm:text-sm text-gray-600 mb-4">
-                    🎨 6 templates únicos e exclusivos para seu negócio
-                  </p>
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowExclusiveTemplates(true);
-                    }}
-                    className="w-full bg-gradient-to-r from-yellow-500 to-purple-500 hover:from-yellow-600 hover:to-purple-600 text-white font-semibold text-sm"
-                  >
-                    Explorar Templates
-                  </Button>
-                </CardContent>
-              </Card>
-
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <Card
                 className="hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-indigo-50 hover:scale-105"
                 onClick={() => setShowAdvancedAnalytics(true)}
@@ -362,13 +275,13 @@ const BudgetForm = () => {
               </Card>
 
               <Card
-                className="hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-green-300 bg-gradient-to-br from-green-50 to-emerald-50 hover:scale-105 sm:col-span-2 lg:col-span-1"
+                className="hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-green-300 bg-gradient-to-br from-green-50 to-emerald-50 hover:scale-105"
                 onClick={() => setShowAllPremiumFeatures(true)}
               >
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                     <Archive className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" />
-                    <span className="truncate">Todas as Funcionalidades</span>
+                    <span className="truncate">Funcionalidades Premium</span>
                     <Crown className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 flex-shrink-0" />
                   </CardTitle>
                 </CardHeader>
@@ -383,7 +296,7 @@ const BudgetForm = () => {
                     }}
                     className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold text-sm"
                   >
-                    Acessar Tudo
+                    Acessar Premium
                   </Button>
                 </CardContent>
               </Card>
@@ -391,39 +304,9 @@ const BudgetForm = () => {
           </div>
         )}
 
-        {/* SEÇÕES EXPANDIDAS */}
+        {/* SEÇÕES EXPANDIDAS (removido Templates Exclusivos) */}
         {hasAccessToPremium && (
           <div className="mb-6 sm:mb-8 space-y-6">
-            {showExclusiveTemplates && (
-              <Card className="shadow-xl border-2 border-yellow-300 bg-gradient-to-br from-yellow-50 to-purple-50">
-                <CardHeader className="bg-gradient-to-r from-yellow-400 to-purple-500 text-white rounded-t-lg">
-                  <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-lg sm:text-xl">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />
-                      Templates Exclusivos Enterprise
-                      <Crown className="w-5 h-5 sm:w-6 sm:h-6" />
-                    </div>
-                    <div className="ml-auto">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => setShowExclusiveTemplates(false)}
-                        className="bg-white text-purple-600 hover:bg-gray-100"
-                      >
-                        Ocultar
-                      </Button>
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 sm:p-6">
-                  <ExclusiveTemplates
-                    selectedTemplate={selectedExclusiveTemplate?.id || ''}
-                    onTemplateSelect={handleExclusiveTemplateSelect}
-                  />
-                </CardContent>
-              </Card>
-            )}
-
             {showAdvancedAnalytics && (
               <Card className="shadow-xl border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-indigo-50">
                 <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-t-lg">
@@ -475,8 +358,8 @@ const BudgetForm = () => {
                 <CardContent className="p-4 sm:p-6">
                   <PremiumFeatures
                     onTemplateSelect={(template) => setSelectedPremiumTemplate(template)}
-                    onCustomizationChange={handleAdvancedCustomizationChange}
-                    onLoadBudget={handleLoadBudgetFromBackup}
+                    onCustomizationChange={(options) => setAdvancedCustomization(options)}
+                    onLoadBudget={(budgetData) => setBudgetData(budgetData)}
                   />
                 </CardContent>
               </Card>
@@ -608,7 +491,7 @@ const BudgetForm = () => {
               </CardContent>
             </Card>
 
-            {/* Tema de Cores */}
+            {/* Tema de Cores - RESTAURADO */}
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle style={{ color: currentTheme.primary }}>Escolha o Tema</CardTitle>
@@ -621,11 +504,10 @@ const BudgetForm = () => {
                       onClick={() => {
                         setBudgetData(prev => ({ ...prev, colorTheme: key }));
                         setSelectedPremiumTemplate(null);
-                        setSelectedExclusiveTemplate(null);
                         setAdvancedCustomization(null);
                       }}
                       className={`w-full h-10 sm:h-12 rounded-lg border-2 transition-all ${
-                        budgetData.colorTheme === key && !selectedPremiumTemplate && !selectedExclusiveTemplate && !advancedCustomization ? 'border-gray-800 scale-105' : 'border-gray-200'
+                        budgetData.colorTheme === key && !selectedPremiumTemplate && !advancedCustomization ? 'border-gray-800 scale-105' : 'border-gray-200'
                       }`}
                       style={{ backgroundColor: theme.primary }}
                     />
@@ -640,16 +522,7 @@ const BudgetForm = () => {
                     </p>
                   </div>
                 )}
-                {selectedExclusiveTemplate && (
-                  <div className="mt-3 p-3 bg-gradient-to-r from-yellow-50 to-purple-50 border border-yellow-200 rounded-lg">
-                    <p className="text-xs sm:text-sm text-gray-800 flex items-center gap-1">
-                      <Sparkles className="w-4 h-4 text-purple-500" />
-                      <Crown className="w-4 h-4 text-yellow-500" />
-                      Template Exclusivo Ativo: {selectedExclusiveTemplate.name}
-                    </p>
-                  </div>
-                )}
-                {selectedPremiumTemplate && !selectedExclusiveTemplate && !advancedCustomization && (
+                {selectedPremiumTemplate && !advancedCustomization && (
                   <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <p className="text-xs sm:text-sm text-yellow-800 flex items-center gap-1">
                       <Crown className="w-4 h-4" />
@@ -875,10 +748,9 @@ const BudgetForm = () => {
                 >
                   <Download className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                   Gerar PDF do Orçamento
-                  {(selectedPremiumTemplate || selectedExclusiveTemplate || advancedCustomization) && (
+                  {(selectedPremiumTemplate) && (
                     <>
                       <Crown className="w-4 h-4 ml-2" />
-                      {selectedExclusiveTemplate && <Sparkles className="w-4 h-4 ml-1" />}
                     </>
                   )}
                 </Button>
