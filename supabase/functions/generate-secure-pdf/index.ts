@@ -9,12 +9,13 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-const COLOR_THEMES = {
-  blue: { primary: '#3B82F6', secondary: '#1E40AF', accent: '#DBEAFE' },
-  green: { primary: '#10B981', secondary: '#047857', accent: '#D1FAE5' },
-  orange: { primary: '#F59E0B', secondary: '#D97706', accent: '#FEF3C7' },
-  purple: { primary: '#8B5CF6', secondary: '#7C3AED', accent: '#EDE9FE' },
-  red: { primary: '#EF4444', secondary: '#DC2626', accent: '#FEE2E2' }
+// Cores que funcionam 100%
+const WORKING_COLORS = {
+  blue: { r: 0.23, g: 0.51, b: 0.96 },
+  green: { r: 0.06, g: 0.73, b: 0.51 },
+  orange: { r: 0.96, g: 0.62, b: 0.04 },
+  purple: { r: 0.55, g: 0.36, b: 0.96 },
+  red: { r: 0.94, g: 0.27, b: 0.27 }
 };
 
 serve(async (req) => {
@@ -59,9 +60,9 @@ serve(async (req) => {
       );
     }
 
-    console.log('Gerando PDF com cores para:', budgetData.clientInfo.name);
+    console.log('Gerando PDF funcional para:', budgetData.clientInfo.name);
 
-    const pdfContent = await generateCompletePDF(budgetData, userId, fingerprint);
+    const pdfContent = await generateFunctionalPDF(budgetData, userId, fingerprint);
 
     await supabase.from('pdf_generations').insert({
       user_id: userId,
@@ -88,43 +89,29 @@ serve(async (req) => {
   }
 });
 
-async function generateCompletePDF(budgetData: any, userId: string, fingerprint: string): Promise<string> {
+async function generateFunctionalPDF(budgetData: any, userId: string, fingerprint: string): Promise<string> {
   try {
-    console.log('Iniciando geração do PDF com cores...');
+    console.log('Iniciando geração do PDF funcional...');
     
-    // Selecionar tema de cores
+    // Selecionar cor que funciona
     const selectedTheme = budgetData.colorTheme || 'blue';
-    const theme = COLOR_THEMES[selectedTheme as keyof typeof COLOR_THEMES] || COLOR_THEMES.blue;
+    const color = WORKING_COLORS[selectedTheme as keyof typeof WORKING_COLORS] || WORKING_COLORS.blue;
     
-    console.log('Tema selecionado:', selectedTheme, theme);
-    
-    // Converter hex para RGB
-    const hexToRgb = (hex: string) => {
-      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result ? {
-        r: parseInt(result[1], 16) / 255,
-        g: parseInt(result[2], 16) / 255,
-        b: parseInt(result[3], 16) / 255
-      } : { r: 0.23, g: 0.51, b: 0.96 }; // fallback para azul
-    };
-    
-    const primaryRgb = hexToRgb(theme.primary);
-    const accentRgb = hexToRgb(theme.accent);
-    
-    console.log('Cores RGB:', { primary: primaryRgb, accent: accentRgb });
+    console.log('Cor selecionada:', selectedTheme, color);
     
     const subtotal = budgetData.items.reduce((sum: number, item: any) => sum + (item.total || 0), 0);
     const desconto = subtotal * (budgetData.discount || 0) / 100;
     const total = subtotal - desconto;
+    const budgetNumber = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
 
     const watermark = `ID: ${userId.slice(-8)} | FP: ${fingerprint} | ${new Date().toISOString()}`;
     
-    const itemsContent = budgetData.items.map((item: any) => {
-      const desc = item.description.length > 25 ? item.description.substring(0, 25) + '...' : item.description;
-      return `${item.quantity.toString().padEnd(4)} ${desc.padEnd(30)} R$ ${item.unitPrice.toFixed(2).padStart(10)} R$ ${item.total.toFixed(2).padStart(12)}`;
+    const itemsContent = budgetData.items.map((item: any, index: number) => {
+      const desc = item.description.length > 30 ? item.description.substring(0, 30) + '...' : item.description;
+      return `${(index + 1).toString().padEnd(3)} ${desc.padEnd(35)} R$ ${item.unitPrice.toFixed(2).padStart(8)} R$ ${item.total.toFixed(2).padStart(10)}`;
     }).join('\n');
 
-    // Template PDF com cores aplicadas
+    // Template PDF funcional com cores
     const pdfTemplate = `%PDF-1.4
 1 0 obj
 <<
@@ -152,144 +139,141 @@ endobj
 /F1 5 0 R
 /F2 6 0 R
 >>
-/ColorSpace <<
-/CS1 7 0 R
->>
 >>
 >>
 endobj
 
 4 0 obj
 <<
-/Length ${1500 + itemsContent.length}
+/Length ${2000 + itemsContent.length}
 >>
 stream
 q
-${primaryRgb.r} ${primaryRgb.g} ${primaryRgb.b} rg
+${color.r} ${color.g} ${color.b} rg
 0 765 612 27 re
 f
 Q
 
 BT
 1 1 1 rg
-/F1 20 Tf
+/F1 18 Tf
 50 775 Td
-(ORCAMENTO PROFISSIONAL) Tj
-0 -15 Td
-/F2 12 Tf
-(${(budgetData.companyInfo.name || 'N/A').substring(0, 50)}) Tj
+(ORCAMENTO PROFISSIONAL - ${budgetNumber}) Tj
+0 -10 Td
+/F2 10 Tf
+(Data: ${new Date().toLocaleDateString('pt-BR')}) Tj
 ET
 
 q
-${accentRgb.r} ${accentRgb.g} ${accentRgb.b} rg
-50 720 512 20 re
+${color.r + 0.1} ${color.g + 0.1} ${color.b + 0.1} rg
+50 720 512 18 re
 f
 Q
 
 BT
-${primaryRgb.r} ${primaryRgb.g} ${primaryRgb.b} rg
-/F1 14 Tf
+${color.r - 0.2} ${color.g - 0.2} ${color.b - 0.2} rg
+/F1 12 Tf
 55 728 Td
 (DADOS DA EMPRESA) Tj
 0 0 0 rg
-/F2 12 Tf
-0 -25 Td
-(Empresa: ${(budgetData.companyInfo.name || 'N/A').substring(0, 50)}) Tj
-0 -15 Td
-(Email: ${(budgetData.companyInfo.email || 'N/A').substring(0, 50)}) Tj
-0 -15 Td
+/F2 10 Tf
+0 -20 Td
+(${(budgetData.companyInfo.name || 'N/A').substring(0, 50)}) Tj
+0 -12 Td
+(Email: ${(budgetData.companyInfo.email || 'N/A').substring(0, 45)}) Tj
+0 -12 Td
 (Telefone: ${(budgetData.companyInfo.phone || 'N/A').substring(0, 30)}) Tj
-0 -15 Td
-(Endereco: ${(budgetData.companyInfo.address || 'N/A').substring(0, 50)}) Tj
+0 -12 Td
+(Endereco: ${(budgetData.companyInfo.address || 'N/A').substring(0, 45)}) Tj
 ET
 
 q
-${accentRgb.r} ${accentRgb.g} ${accentRgb.b} rg
-50 630 512 20 re
+${color.r + 0.1} ${color.g + 0.1} ${color.b + 0.1} rg
+50 625 512 18 re
 f
 Q
 
 BT
-${primaryRgb.r} ${primaryRgb.g} ${primaryRgb.b} rg
-/F1 14 Tf
-55 638 Td
+${color.r - 0.2} ${color.g - 0.2} ${color.b - 0.2} rg
+/F1 12 Tf
+55 633 Td
 (DADOS DO CLIENTE) Tj
 0 0 0 rg
-/F2 12 Tf
-0 -25 Td
-(Cliente: ${(budgetData.clientInfo.name || 'N/A').substring(0, 50)}) Tj
-0 -15 Td
-(Email: ${(budgetData.clientInfo.email || 'N/A').substring(0, 50)}) Tj
-0 -15 Td
+/F2 10 Tf
+0 -20 Td
+(${(budgetData.clientInfo.name || 'N/A').substring(0, 50)}) Tj
+0 -12 Td
+(Email: ${(budgetData.clientInfo.email || 'N/A').substring(0, 45)}) Tj
+0 -12 Td
 (Telefone: ${(budgetData.clientInfo.phone || 'N/A').substring(0, 30)}) Tj
-0 -15 Td
-(Endereco: ${(budgetData.clientInfo.address || 'N/A').substring(0, 50)}) Tj
+0 -12 Td
+(Endereco: ${(budgetData.clientInfo.address || 'N/A').substring(0, 45)}) Tj
 ET
 
 q
-${accentRgb.r} ${accentRgb.g} ${accentRgb.b} rg
-50 520 512 20 re
+${color.r + 0.1} ${color.g + 0.1} ${color.b + 0.1} rg
+50 520 512 18 re
 f
 Q
 
 BT
-${primaryRgb.r} ${primaryRgb.g} ${primaryRgb.b} rg
-/F1 14 Tf
+${color.r - 0.2} ${color.g - 0.2} ${color.b - 0.2} rg
+/F1 12 Tf
 55 528 Td
-(DETALHAMENTO DOS SERVICOS) Tj
+(ITENS DO ORCAMENTO) Tj
 0 0 0 rg
-/F2 10 Tf
-0 -25 Td
-(Qtd  Descricao                    Preco Unit.      Total) Tj
+/F2 9 Tf
+0 -20 Td
+(Item Descricao                            Preco Unit.  Total) Tj
 0 -15 Td
 (${itemsContent}) Tj
-0 -30 Td
+0 -25 Td
 
 q
-${primaryRgb.r} ${primaryRgb.g} ${primaryRgb.b} RG
+${color.r} ${color.g} ${color.b} RG
 2 w
-405 0 157 80 re
+380 0 180 70 re
 S
 Q
 
-/F1 12 Tf
-410 70 Td
+/F1 11 Tf
+385 65 Td
 (Subtotal: R$ ${subtotal.toFixed(2)}) Tj
-0 -18 Td
+0 -15 Td
 (Desconto: R$ ${desconto.toFixed(2)}) Tj
-0 -18 Td
-${primaryRgb.r} ${primaryRgb.g} ${primaryRgb.b} rg
-/F1 16 Tf
+0 -15 Td
+${color.r} ${color.g} ${color.b} rg
+/F1 14 Tf
 (TOTAL: R$ ${total.toFixed(2)}) Tj
 0 0 0 rg
-0 -35 Td
+0 -30 Td
 
-/F2 10 Tf
+/F2 9 Tf
 (Validade: ${budgetData.validityDays || 30} dias) Tj
+0 -12 Td
+(${(budgetData.specialConditions || 'Sem condicoes especiais').substring(0, 70)}) Tj
 0 -20 Td
-(${(budgetData.specialConditions || 'Sem condicoes especiais').substring(0, 80)}) Tj
-0 -25 Td
-(${(budgetData.observations || '').substring(0, 80)}) Tj
+(${(budgetData.observations || '').substring(0, 70)}) Tj
 ET
 
 q
-${primaryRgb.r} ${primaryRgb.g} ${primaryRgb.b} rg
-50 150 512 40 re
+${color.r} ${color.g} ${color.b} rg
+50 140 512 30 re
 f
 Q
 
 BT
 1 1 1 rg
-/F1 16 Tf
-55 168 Td
-(PRONTO PARA COMECAR?) Tj
-/F2 10 Tf
-0 -15 Td
-(Este orcamento tem validade de ${budgetData.validityDays || 30} dias.) Tj
+/F1 14 Tf
+55 158 Td
+(ACEITA NOSSO ORCAMENTO?) Tj
+/F2 9 Tf
+0 -12 Td
+(Entre em contato conosco para finalizar!) Tj
 0 0 0 rg
-0 -35 Td
+0 -25 Td
 
-/F2 8 Tf
+/F2 7 Tf
 0.5 0.5 0.5 rg
 (${watermark}) Tj
 ET
@@ -312,30 +296,25 @@ endobj
 >>
 endobj
 
-7 0 obj
-[/DeviceRGB]
-endobj
-
 xref
-0 8
+0 7
 0000000000 65535 f 
 0000000009 00000 n 
 0000000058 00000 n 
 0000000115 00000 n 
 0000000273 00000 n 
-0000002000 00000 n 
-0000002068 00000 n 
-0000002131 00000 n 
+0000002500 00000 n 
+0000002568 00000 n 
 trailer
 <<
-/Size 8
+/Size 7
 /Root 1 0 R
 >>
 startxref
-2158
+2631
 %%EOF`;
 
-    console.log('PDF template com cores criado');
+    console.log('PDF funcional criado');
 
     const encoder = new TextEncoder();
     const pdfBytes = encoder.encode(pdfTemplate);
@@ -351,7 +330,7 @@ startxref
     
     const base64String = base64Chunks.join('');
     
-    console.log('PDF com cores gerado com sucesso, tamanho:', base64String.length);
+    console.log('PDF funcional gerado com sucesso, tamanho:', base64String.length);
     
     return base64String;
     
