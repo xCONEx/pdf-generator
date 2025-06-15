@@ -1,4 +1,5 @@
 
+
 import jsPDF from 'jspdf';
 import { BudgetData, COLOR_THEMES } from '@/types/budget';
 import { generateSecurePDF } from './secureGenerator';
@@ -143,7 +144,11 @@ export const generatePDF = async (budgetData: BudgetData) => {
       }
       
       pdf.text((index + 1).toString(), margin + 3, yPosition + 3);
-      pdf.text(item.description.substring(0, 30), margin + 20, yPosition + 3);
+      
+      // Truncar descrição se muito longa
+      const description = item.description.length > 25 ? item.description.substring(0, 25) + '...' : item.description;
+      pdf.text(description, margin + 20, yPosition + 3);
+      
       pdf.text(item.quantity.toString(), margin + 100, yPosition + 3);
       pdf.text(`R$ ${item.unitPrice.toFixed(2)}`, margin + 120, yPosition + 3);
       pdf.text(`R$ ${item.total.toFixed(2)}`, margin + 160, yPosition + 3);
@@ -158,28 +163,29 @@ export const generatePDF = async (budgetData: BudgetData) => {
     const discount = subtotal * (budgetData.discount || 0) / 100;
     const total = subtotal - discount;
 
-    // Caixa de totais
-    pdf.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    pdf.setLineWidth(2);
-    pdf.rect(margin + 100, yPosition, 80, 30);
+    // Posicionar totais à direita
+    const totalsX = pageWidth - 90;
     
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(11);
     
-    pdf.text('Subtotal:', margin + 105, yPosition + 10);
-    pdf.text(`R$ ${subtotal.toFixed(2)}`, margin + 145, yPosition + 10);
+    pdf.text('Subtotal:', totalsX, yPosition);
+    pdf.text(`R$ ${subtotal.toFixed(2)}`, totalsX + 40, yPosition);
+    yPosition += 8;
 
     if (budgetData.discount > 0) {
-      pdf.text(`Desconto (${budgetData.discount}%):`, margin + 105, yPosition + 17);
-      pdf.text(`-R$ ${discount.toFixed(2)}`, margin + 145, yPosition + 17);
+      pdf.text(`Desconto (${budgetData.discount}%):`, totalsX, yPosition);
+      pdf.text(`-R$ ${discount.toFixed(2)}`, totalsX + 40, yPosition);
+      yPosition += 8;
     }
 
+    // Total final destacado
     pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
     pdf.setFontSize(14);
-    pdf.text('TOTAL:', margin + 105, yPosition + 25);
-    pdf.text(`R$ ${total.toFixed(2)}`, margin + 145, yPosition + 25);
+    pdf.text('TOTAL:', totalsX, yPosition);
+    pdf.text(`R$ ${total.toFixed(2)}`, totalsX + 40, yPosition);
     
-    yPosition += 40;
+    yPosition += 20;
 
     // Informações adicionais
     pdf.setTextColor(0, 0, 0);
@@ -190,17 +196,30 @@ export const generatePDF = async (budgetData: BudgetData) => {
     yPosition += 8;
     
     if (budgetData.specialConditions) {
-      pdf.text(`Condicoes: ${budgetData.specialConditions.substring(0, 70)}`, margin, yPosition);
-      yPosition += 8;
+      // Quebrar texto longo em múltiplas linhas
+      const conditions = pdf.splitTextToSize(budgetData.specialConditions, pageWidth - 2 * margin);
+      pdf.text('Condicoes:', margin, yPosition);
+      yPosition += 6;
+      pdf.text(conditions.slice(0, 3), margin, yPosition); // Máximo 3 linhas
+      yPosition += 6 * Math.min(conditions.length, 3);
     }
     
     if (budgetData.observations) {
-      pdf.text(`Observacoes: ${budgetData.observations.substring(0, 70)}`, margin, yPosition);
-      yPosition += 8;
+      // Quebrar texto longo em múltiplas linhas
+      const observations = pdf.splitTextToSize(budgetData.observations, pageWidth - 2 * margin);
+      pdf.text('Observacoes:', margin, yPosition);
+      yPosition += 6;
+      pdf.text(observations.slice(0, 3), margin, yPosition); // Máximo 3 linhas
+      yPosition += 6 * Math.min(observations.length, 3);
     }
 
     // CTA final
     yPosition += 10;
+    if (yPosition > 260) {
+      pdf.addPage();
+      yPosition = 30;
+    }
+    
     pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
     pdf.rect(margin, yPosition, pageWidth - 2 * margin, 20, 'F');
     
@@ -222,3 +241,4 @@ export const generatePDF = async (budgetData: BudgetData) => {
     throw new Error(`Erro ao gerar PDF: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
   }
 };
+

@@ -1,4 +1,5 @@
 
+
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import 'https://deno.land/x/xhr@0.1.0/mod.ts';
@@ -105,21 +106,27 @@ async function generateSecurePDF(budgetData: any, userId: string, fingerprint: s
 
     const watermark = `ID: ${userId.slice(-8)} | FP: ${fingerprint} | ${new Date().toISOString()}`;
     
+    // Melhorar formatação dos itens
     const itemsContent = budgetData.items.map((item: any, index: number) => {
-      return `${(index + 1).toString().padEnd(3)} ${item.description.substring(0, 30).padEnd(35)} ${item.quantity.toString().padEnd(4)} R$ ${item.unitPrice.toFixed(2).padStart(8)} R$ ${item.total.toFixed(2).padStart(10)}`;
+      const description = item.description.length > 20 ? item.description.substring(0, 20) + '...' : item.description;
+      return `${(index + 1).toString().padEnd(2)} ${description.padEnd(25)} ${item.quantity.toString().padEnd(3)} R$ ${item.unitPrice.toFixed(2).padStart(8)} R$ ${item.total.toFixed(2).padStart(10)}`;
     }).join('\n');
 
-    const companyName = budgetData.companyInfo.name.substring(0, 50);
-    const companyEmail = budgetData.companyInfo.email.substring(0, 45);
-    const companyPhone = budgetData.companyInfo.phone.substring(0, 30);
-    const companyAddress = (budgetData.companyInfo.address || '').substring(0, 45);
+    // Truncar textos longos para evitar problemas
+    const companyName = budgetData.companyInfo.name.substring(0, 40);
+    const companyEmail = budgetData.companyInfo.email.substring(0, 40);
+    const companyPhone = budgetData.companyInfo.phone.substring(0, 25);
+    const companyAddress = (budgetData.companyInfo.address || '').substring(0, 40);
 
-    const clientName = budgetData.clientInfo.name.substring(0, 50);
-    const clientEmail = budgetData.clientInfo.email.substring(0, 45);
-    const clientPhone = budgetData.clientInfo.phone.substring(0, 30);
-    const clientAddress = (budgetData.clientInfo.address || '').substring(0, 45);
+    const clientName = budgetData.clientInfo.name.substring(0, 40);
+    const clientEmail = budgetData.clientInfo.email.substring(0, 40);
+    const clientPhone = budgetData.clientInfo.phone.substring(0, 25);
+    const clientAddress = (budgetData.clientInfo.address || '').substring(0, 40);
 
-    const contentLength = 2000 + itemsContent.length + companyName.length + clientName.length;
+    const specialConditions = (budgetData.specialConditions || '').substring(0, 50);
+    const observations = (budgetData.observations || '').substring(0, 50);
+
+    const contentLength = 2200 + itemsContent.length + companyName.length + clientName.length + specialConditions.length + observations.length;
 
     const pdfTemplate = `%PDF-1.4
 1 0 obj
@@ -233,20 +240,13 @@ BT
 0 0 0 rg
 /F2 9 Tf
 0 -20 Td
-(Item Descricao                           Qtd  Preco Unit.  Total) Tj
+(Item Descricao               Qtd  Preco Unit.    Total) Tj
 0 -15 Td
 (${itemsContent}) Tj
 0 -30 Td
 
-q
-${selectedColor.r} ${selectedColor.g} ${selectedColor.b} RG
-2 w
-400 0 180 90 re
-S
-Q
-
 /F1 11 Tf
-405 85 Td
+400 0 Td
 (Subtotal: R$ ${subtotal.toFixed(2)}) Tj
 0 -15 Td
 (Desconto: R$ ${desconto.toFixed(2)}) Tj
@@ -255,14 +255,14 @@ ${selectedColor.r} ${selectedColor.g} ${selectedColor.b} rg
 /F1 14 Tf
 (TOTAL: R$ ${total.toFixed(2)}) Tj
 0 0 0 rg
-0 -35 Td
+-400 -35 Td
 
 /F2 9 Tf
 (Validade: ${budgetData.validityDays || 30} dias) Tj
 0 -12 Td
-(${(budgetData.specialConditions || '').substring(0, 60)}) Tj
+(Condicoes: ${specialConditions}) Tj
 0 -12 Td
-(${(budgetData.observations || '').substring(0, 60)}) Tj
+(Observacoes: ${observations}) Tj
 ET
 
 q
@@ -338,3 +338,4 @@ startxref
     throw new Error(`Falha na geração do PDF: ${error.message}`);
   }
 }
+
