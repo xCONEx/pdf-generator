@@ -33,6 +33,7 @@ export interface BudgetData {
   validityDays: number;
   discount: number;
   premiumTemplate?: any;
+  exclusiveTemplate?: any;
   advancedCustomization?: any;
 }
 
@@ -56,30 +57,35 @@ export const COLOR_THEMES = {
     primary: '#3B82F6',
     secondary: '#1E40AF',
     accent: '#DBEAFE',
+    text: '#000000',
     gradient: 'from-blue-500 to-blue-600'
   },
   green: {
     primary: '#10B981',
     secondary: '#047857',
     accent: '#D1FAE5',
+    text: '#000000',
     gradient: 'from-green-500 to-green-600'
   },
   orange: {
     primary: '#F59E0B',
     secondary: '#D97706',
     accent: '#FEF3C7',
+    text: '#000000',
     gradient: 'from-orange-500 to-orange-600'
   },
   purple: {
     primary: '#8B5CF6',
     secondary: '#7C3AED',
     accent: '#EDE9FE',
+    text: '#000000',
     gradient: 'from-purple-500 to-purple-600'
   },
   red: {
     primary: '#EF4444',
     secondary: '#DC2626',
     accent: '#FEE2E2',
+    text: '#000000',
     gradient: 'from-red-500 to-red-600'
   }
 };
