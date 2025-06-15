@@ -25,31 +25,20 @@ export const generatePDF = async (budgetData: BudgetData) => {
       console.log('Geração segura falhou, usando método padrão:', secureError);
     }
 
-    // Método padrão garantido
+    // Método padrão com cor azul fixa
     const pdf = new jsPDF();
-    
-    // Cores RGB que funcionam 100%
-    const colors = {
-      blue: [41, 128, 185],
-      green: [39, 174, 96],
-      orange: [230, 126, 34],
-      purple: [142, 68, 173],
-      red: [231, 76, 60]
-    } as const;
-
-    const selectedColor = colors[budgetData.colorTheme as keyof typeof colors] || colors.blue;
-
-    console.log('Gerando PDF com cor:', budgetData.colorTheme, selectedColor);
-
     const pageWidth = 210;
     const margin = 15;
     let yPosition = 25;
 
+    // Cor azul padrão que sempre funciona
+    const primaryColor = [41, 128, 185]; // RGB azul
+    
     // Configurar fonte padrão
     pdf.setFont('helvetica');
 
-    // Cabeçalho
-    pdf.setFillColor(selectedColor[0], selectedColor[1], selectedColor[2]);
+    // Cabeçalho azul
+    pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
     pdf.rect(0, 0, pageWidth, 30, 'F');
     
     pdf.setTextColor(255, 255, 255);
@@ -64,14 +53,12 @@ export const generatePDF = async (budgetData: BudgetData) => {
     pdf.text(`Nº: ${budgetNumber} | Data: ${currentDate}`, pageWidth - 70, 20);
 
     yPosition = 40;
-
-    // Reset cor do texto
     pdf.setTextColor(0, 0, 0);
     pdf.setFont('helvetica', 'normal');
 
     // Função para criar seções
     const createSection = (title: string, y: number) => {
-      pdf.setFillColor(selectedColor[0], selectedColor[1], selectedColor[2]);
+      pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       pdf.rect(margin, y - 5, pageWidth - 2 * margin, 12, 'F');
       
       pdf.setTextColor(255, 255, 255);
@@ -95,10 +82,7 @@ export const generatePDF = async (budgetData: BudgetData) => {
     pdf.text(`Telefone: ${budgetData.companyInfo.phone}`, margin + 3, yPosition);
     yPosition += 6;
     if (budgetData.companyInfo.address) {
-      const address = budgetData.companyInfo.address.length > 60 ? 
-        budgetData.companyInfo.address.substring(0, 60) + '...' : 
-        budgetData.companyInfo.address;
-      pdf.text(`Endereco: ${address}`, margin + 3, yPosition);
+      pdf.text(`Endereco: ${budgetData.companyInfo.address}`, margin + 3, yPosition);
       yPosition += 6;
     }
     yPosition += 8;
@@ -112,10 +96,7 @@ export const generatePDF = async (budgetData: BudgetData) => {
     pdf.text(`Telefone: ${budgetData.clientInfo.phone}`, margin + 3, yPosition);
     yPosition += 6;
     if (budgetData.clientInfo.address) {
-      const address = budgetData.clientInfo.address.length > 60 ? 
-        budgetData.clientInfo.address.substring(0, 60) + '...' : 
-        budgetData.clientInfo.address;
-      pdf.text(`Endereco: ${address}`, margin + 3, yPosition);
+      pdf.text(`Endereco: ${budgetData.clientInfo.address}`, margin + 3, yPosition);
       yPosition += 6;
     }
     yPosition += 8;
@@ -129,8 +110,9 @@ export const generatePDF = async (budgetData: BudgetData) => {
     
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(9);
-    pdf.text('Qtd', margin + 3, yPosition + 3);
+    pdf.text('Item', margin + 3, yPosition + 3);
     pdf.text('Descricao', margin + 20, yPosition + 3);
+    pdf.text('Qtd', margin + 100, yPosition + 3);
     pdf.text('Preco Unit.', margin + 120, yPosition + 3);
     pdf.text('Total', margin + 160, yPosition + 3);
     yPosition += 12;
@@ -150,12 +132,9 @@ export const generatePDF = async (budgetData: BudgetData) => {
         pdf.rect(margin, yPosition - 2, pageWidth - 2 * margin, 8, 'F');
       }
       
-      const description = item.description.length > 40 ? 
-        item.description.substring(0, 40) + '...' : 
-        item.description;
-      
-      pdf.text(item.quantity.toString(), margin + 3, yPosition + 3);
-      pdf.text(description, margin + 20, yPosition + 3);
+      pdf.text((index + 1).toString(), margin + 3, yPosition + 3);
+      pdf.text(item.description.substring(0, 30), margin + 20, yPosition + 3);
+      pdf.text(item.quantity.toString(), margin + 100, yPosition + 3);
       pdf.text(`R$ ${item.unitPrice.toFixed(2)}`, margin + 120, yPosition + 3);
       pdf.text(`R$ ${item.total.toFixed(2)}`, margin + 160, yPosition + 3);
       
@@ -170,7 +149,7 @@ export const generatePDF = async (budgetData: BudgetData) => {
     const total = subtotal - discount;
 
     // Caixa de totais
-    pdf.setDrawColor(selectedColor[0], selectedColor[1], selectedColor[2]);
+    pdf.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
     pdf.setLineWidth(2);
     pdf.rect(margin + 100, yPosition, 80, 30);
     
@@ -185,7 +164,7 @@ export const generatePDF = async (budgetData: BudgetData) => {
       pdf.text(`-R$ ${discount.toFixed(2)}`, margin + 145, yPosition + 17);
     }
 
-    pdf.setTextColor(selectedColor[0], selectedColor[1], selectedColor[2]);
+    pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
     pdf.setFontSize(14);
     pdf.text('TOTAL:', margin + 105, yPosition + 25);
     pdf.text(`R$ ${total.toFixed(2)}`, margin + 145, yPosition + 25);
@@ -201,24 +180,18 @@ export const generatePDF = async (budgetData: BudgetData) => {
     yPosition += 8;
     
     if (budgetData.specialConditions) {
-      const conditions = budgetData.specialConditions.length > 80 ? 
-        budgetData.specialConditions.substring(0, 80) + '...' : 
-        budgetData.specialConditions;
-      pdf.text(`Condicoes: ${conditions}`, margin, yPosition);
+      pdf.text(`Condicoes: ${budgetData.specialConditions.substring(0, 70)}`, margin, yPosition);
       yPosition += 8;
     }
     
     if (budgetData.observations) {
-      const obs = budgetData.observations.length > 80 ? 
-        budgetData.observations.substring(0, 80) + '...' : 
-        budgetData.observations;
-      pdf.text(`Observacoes: ${obs}`, margin, yPosition);
+      pdf.text(`Observacoes: ${budgetData.observations.substring(0, 70)}`, margin, yPosition);
       yPosition += 8;
     }
 
     // CTA final
     yPosition += 10;
-    pdf.setFillColor(selectedColor[0], selectedColor[1], selectedColor[2]);
+    pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
     pdf.rect(margin, yPosition, pageWidth - 2 * margin, 20, 'F');
     
     pdf.setTextColor(255, 255, 255);

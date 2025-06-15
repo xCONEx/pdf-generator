@@ -9,15 +9,6 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-// Cores RGB que funcionam 100%
-const WORKING_COLORS = {
-  blue: { r: 0.16, g: 0.50, b: 0.73 },
-  green: { r: 0.15, g: 0.68, b: 0.38 },
-  orange: { r: 0.90, g: 0.49, b: 0.13 },
-  purple: { r: 0.56, g: 0.27, b: 0.68 },
-  red: { r: 0.91, g: 0.30, b: 0.24 }
-};
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -93,10 +84,10 @@ async function generateSecurePDF(budgetData: any, userId: string, fingerprint: s
   try {
     console.log('Iniciando geração do PDF seguro...');
     
-    const selectedTheme = budgetData.colorTheme || 'blue';
-    const color = WORKING_COLORS[selectedTheme as keyof typeof WORKING_COLORS] || WORKING_COLORS.blue;
+    // Usando apenas cor azul padrão
+    const color = { r: 0.16, g: 0.50, b: 0.73 };
     
-    console.log('Cor selecionada:', selectedTheme, color);
+    console.log('Usando cor azul padrão:', color);
     
     const subtotal = budgetData.items.reduce((sum: number, item: any) => sum + (item.total || 0), 0);
     const desconto = subtotal * (budgetData.discount || 0) / 100;
@@ -106,8 +97,7 @@ async function generateSecurePDF(budgetData: any, userId: string, fingerprint: s
     const watermark = `ID: ${userId.slice(-8)} | FP: ${fingerprint} | ${new Date().toISOString()}`;
     
     const itemsContent = budgetData.items.map((item: any, index: number) => {
-      const desc = item.description.length > 30 ? item.description.substring(0, 30) + '...' : item.description;
-      return `${(index + 1).toString().padEnd(3)} ${desc.padEnd(35)} ${item.quantity.toString().padEnd(4)} R$ ${item.unitPrice.toFixed(2).padStart(8)} R$ ${item.total.toFixed(2).padStart(10)}`;
+      return `${(index + 1).toString().padEnd(3)} ${item.description.substring(0, 30).padEnd(35)} ${item.quantity.toString().padEnd(4)} R$ ${item.unitPrice.toFixed(2).padStart(8)} R$ ${item.total.toFixed(2).padStart(10)}`;
     }).join('\n');
 
     const companyName = budgetData.companyInfo.name.substring(0, 50);
