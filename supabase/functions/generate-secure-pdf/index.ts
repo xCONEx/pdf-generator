@@ -60,9 +60,9 @@ serve(async (req) => {
       );
     }
 
-    console.log('Gerando PDF funcional para:', budgetData.clientInfo.name);
+    console.log('Gerando PDF seguro para:', budgetData.clientInfo.name);
 
-    const pdfContent = await generateFunctionalPDF(budgetData, userId, fingerprint);
+    const pdfContent = await generateSecurePDF(budgetData, userId, fingerprint);
 
     await supabase.from('pdf_generations').insert({
       user_id: userId,
@@ -89,11 +89,11 @@ serve(async (req) => {
   }
 });
 
-async function generateFunctionalPDF(budgetData: any, userId: string, fingerprint: string): Promise<string> {
+async function generateSecurePDF(budgetData: any, userId: string, fingerprint: string): Promise<string> {
   try {
-    console.log('Iniciando geração do PDF funcional...');
+    console.log('Iniciando geração do PDF seguro...');
     
-    // Selecionar cor que funciona
+    // Selecionar cor funcional
     const selectedTheme = budgetData.colorTheme || 'blue';
     const color = WORKING_COLORS[selectedTheme as keyof typeof WORKING_COLORS] || WORKING_COLORS.blue;
     
@@ -108,10 +108,10 @@ async function generateFunctionalPDF(budgetData: any, userId: string, fingerprin
     
     const itemsContent = budgetData.items.map((item: any, index: number) => {
       const desc = item.description.length > 30 ? item.description.substring(0, 30) + '...' : item.description;
-      return `${(index + 1).toString().padEnd(3)} ${desc.padEnd(35)} R$ ${item.unitPrice.toFixed(2).padStart(8)} R$ ${item.total.toFixed(2).padStart(10)}`;
+      return `${(index + 1).toString().padEnd(3)} ${desc.padEnd(30)} ${item.quantity.toString().padEnd(4)} R$ ${item.unitPrice.toFixed(2).padStart(8)} R$ ${item.total.toFixed(2).padStart(10)}`;
     }).join('\n');
 
-    // Template PDF funcional com cores
+    // Template PDF funcional
     const pdfTemplate = `%PDF-1.4
 1 0 obj
 <<
@@ -145,7 +145,7 @@ endobj
 
 4 0 obj
 <<
-/Length ${2000 + itemsContent.length}
+/Length ${1800 + itemsContent.length}
 >>
 stream
 q
@@ -159,72 +159,72 @@ BT
 /F1 18 Tf
 50 775 Td
 (ORCAMENTO PROFISSIONAL - ${budgetNumber}) Tj
-0 -10 Td
+0 -8 Td
 /F2 10 Tf
 (Data: ${new Date().toLocaleDateString('pt-BR')}) Tj
 ET
 
 q
-${color.r + 0.1} ${color.g + 0.1} ${color.b + 0.1} rg
-50 720 512 18 re
+${color.r} ${color.g} ${color.b} rg
+50 720 512 20 re
 f
 Q
 
 BT
-${color.r - 0.2} ${color.g - 0.2} ${color.b - 0.2} rg
+1 1 1 rg
 /F1 12 Tf
-55 728 Td
+55 730 Td
 (DADOS DA EMPRESA) Tj
 0 0 0 rg
 /F2 10 Tf
-0 -20 Td
-(${(budgetData.companyInfo.name || 'N/A').substring(0, 50)}) Tj
+0 -18 Td
+(${budgetData.companyInfo.name.substring(0, 50)}) Tj
 0 -12 Td
-(Email: ${(budgetData.companyInfo.email || 'N/A').substring(0, 45)}) Tj
+(Email: ${budgetData.companyInfo.email.substring(0, 45)}) Tj
 0 -12 Td
-(Telefone: ${(budgetData.companyInfo.phone || 'N/A').substring(0, 30)}) Tj
+(Telefone: ${budgetData.companyInfo.phone.substring(0, 30)}) Tj
 0 -12 Td
-(Endereco: ${(budgetData.companyInfo.address || 'N/A').substring(0, 45)}) Tj
+(Endereco: ${(budgetData.companyInfo.address || '').substring(0, 45)}) Tj
 ET
 
 q
-${color.r + 0.1} ${color.g + 0.1} ${color.b + 0.1} rg
-50 625 512 18 re
+${color.r} ${color.g} ${color.b} rg
+50 620 512 20 re
 f
 Q
 
 BT
-${color.r - 0.2} ${color.g - 0.2} ${color.b - 0.2} rg
+1 1 1 rg
 /F1 12 Tf
-55 633 Td
+55 630 Td
 (DADOS DO CLIENTE) Tj
 0 0 0 rg
 /F2 10 Tf
-0 -20 Td
-(${(budgetData.clientInfo.name || 'N/A').substring(0, 50)}) Tj
+0 -18 Td
+(${budgetData.clientInfo.name.substring(0, 50)}) Tj
 0 -12 Td
-(Email: ${(budgetData.clientInfo.email || 'N/A').substring(0, 45)}) Tj
+(Email: ${budgetData.clientInfo.email.substring(0, 45)}) Tj
 0 -12 Td
-(Telefone: ${(budgetData.clientInfo.phone || 'N/A').substring(0, 30)}) Tj
+(Telefone: ${budgetData.clientInfo.phone.substring(0, 30)}) Tj
 0 -12 Td
-(Endereco: ${(budgetData.clientInfo.address || 'N/A').substring(0, 45)}) Tj
+(Endereco: ${(budgetData.clientInfo.address || '').substring(0, 45)}) Tj
 ET
 
 q
-${color.r + 0.1} ${color.g + 0.1} ${color.b + 0.1} rg
-50 520 512 18 re
+${color.r} ${color.g} ${color.b} rg
+50 515 512 20 re
 f
 Q
 
 BT
-${color.r - 0.2} ${color.g - 0.2} ${color.b - 0.2} rg
+1 1 1 rg
 /F1 12 Tf
-55 528 Td
+55 525 Td
 (ITENS DO ORCAMENTO) Tj
 0 0 0 rg
 /F2 9 Tf
-0 -20 Td
-(Item Descricao                            Preco Unit.  Total) Tj
+0 -18 Td
+(Item Descricao                     Qtd  Preco Unit.  Total) Tj
 0 -15 Td
 (${itemsContent}) Tj
 0 -25 Td
@@ -232,12 +232,12 @@ ${color.r - 0.2} ${color.g - 0.2} ${color.b - 0.2} rg
 q
 ${color.r} ${color.g} ${color.b} RG
 2 w
-380 0 180 70 re
+380 0 180 80 re
 S
 Q
 
 /F1 11 Tf
-385 65 Td
+385 75 Td
 (Subtotal: R$ ${subtotal.toFixed(2)}) Tj
 0 -15 Td
 (Desconto: R$ ${desconto.toFixed(2)}) Tj
@@ -251,21 +251,21 @@ ${color.r} ${color.g} ${color.b} rg
 /F2 9 Tf
 (Validade: ${budgetData.validityDays || 30} dias) Tj
 0 -12 Td
-(${(budgetData.specialConditions || 'Sem condicoes especiais').substring(0, 70)}) Tj
-0 -20 Td
-(${(budgetData.observations || '').substring(0, 70)}) Tj
+(${(budgetData.specialConditions || '').substring(0, 60)}) Tj
+0 -12 Td
+(${(budgetData.observations || '').substring(0, 60)}) Tj
 ET
 
 q
 ${color.r} ${color.g} ${color.b} rg
-50 140 512 30 re
+50 120 512 30 re
 f
 Q
 
 BT
 1 1 1 rg
 /F1 14 Tf
-55 158 Td
+55 138 Td
 (ACEITA NOSSO ORCAMENTO?) Tj
 /F2 9 Tf
 0 -12 Td
@@ -303,34 +303,24 @@ xref
 0000000058 00000 n 
 0000000115 00000 n 
 0000000273 00000 n 
-0000002500 00000 n 
-0000002568 00000 n 
+0000002200 00000 n 
+0000002268 00000 n 
 trailer
 <<
 /Size 7
 /Root 1 0 R
 >>
 startxref
-2631
+2331
 %%EOF`;
 
-    console.log('PDF funcional criado');
+    console.log('PDF gerado com sucesso');
 
     const encoder = new TextEncoder();
     const pdfBytes = encoder.encode(pdfTemplate);
+    const base64String = btoa(String.fromCharCode(...pdfBytes));
     
-    const chunkSize = 3000;
-    const base64Chunks: string[] = [];
-    
-    for (let i = 0; i < pdfBytes.length; i += chunkSize) {
-      const chunk = pdfBytes.slice(i, i + chunkSize);
-      const chunkString = String.fromCharCode(...chunk);
-      base64Chunks.push(btoa(chunkString));
-    }
-    
-    const base64String = base64Chunks.join('');
-    
-    console.log('PDF funcional gerado com sucesso, tamanho:', base64String.length);
+    console.log('Base64 criado, tamanho:', base64String.length);
     
     return base64String;
     

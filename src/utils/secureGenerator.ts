@@ -49,21 +49,15 @@ export const generateSecurePDF = async (budgetData: BudgetData): Promise<Blob> =
 
     console.log('PDF recebido da Edge Function, convertendo para blob...');
 
-    // Converter base64 para Blob de forma mais robusta
-    try {
-      const pdfBlob = base64ToBlob(data.pdf, 'application/pdf');
-      console.log('Blob criado com sucesso, tamanho:', pdfBlob.size);
-      
-      // Verificar se o blob não está vazio
-      if (pdfBlob.size === 0) {
-        throw new Error('PDF gerado está vazio');
-      }
-      
-      return pdfBlob;
-    } catch (blobError) {
-      console.error('Erro ao converter para blob:', blobError);
-      throw new Error('Erro na conversão do PDF');
+    // Converter base64 para Blob
+    const pdfBlob = base64ToBlob(data.pdf, 'application/pdf');
+    console.log('Blob criado com sucesso, tamanho:', pdfBlob.size);
+    
+    if (pdfBlob.size === 0) {
+      throw new Error('PDF gerado está vazio');
     }
+    
+    return pdfBlob;
 
   } catch (error) {
     console.error('Erro na geração segura de PDF:', error);
@@ -90,7 +84,6 @@ const generateFingerprint = async (): Promise<string> => {
       canvas.toDataURL(),
     ].join('|');
 
-    // Hash simples do fingerprint
     let hash = 0;
     for (let i = 0; i < fingerprint.length; i++) {
       const char = fingerprint.charCodeAt(i);
@@ -109,53 +102,24 @@ const base64ToBlob = (base64: string, contentType: string): Blob => {
   try {
     console.log('Convertendo base64 para blob, tamanho:', base64.length);
     
-    // Validar se o base64 não está vazio
     if (!base64 || base64.length === 0) {
       throw new Error('Base64 está vazio');
     }
     
-    // Limpar qualquer caractere inválido e validar formato
-    const cleanBase64 = base64.replace(/[^A-Za-z0-9+/=]/g, '');
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
     
-    // Verificar se o tamanho é válido (múltiplo de 4)
-    if (cleanBase64.length % 4 !== 0) {
-      throw new Error('Base64 com formato inválido');
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
     
-    console.log('Base64 limpo, tamanho:', cleanBase64.length);
-    
-    // Decodificar base64 em chunks para evitar problemas de memória
-    const chunkSize = 1024;
-    const byteArrays: Uint8Array[] = [];
-    
-    for (let offset = 0; offset < cleanBase64.length; offset += chunkSize) {
-      const chunk = cleanBase64.slice(offset, offset + chunkSize);
-      const byteCharacters = atob(chunk);
-      const byteNumbers = new Array(byteCharacters.length);
-      
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      
-      byteArrays.push(new Uint8Array(byteNumbers));
-    }
-    
-    // Combinar todos os chunks
-    const totalLength = byteArrays.reduce((sum, arr) => sum + arr.length, 0);
-    const result = new Uint8Array(totalLength);
-    let offset = 0;
-    
-    for (const arr of byteArrays) {
-      result.set(arr, offset);
-      offset += arr.length;
-    }
-    
-    const blob = new Blob([result], { type: contentType });
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: contentType });
     
     console.log('Blob criado:', blob.size, 'bytes');
     return blob;
   } catch (error) {
     console.error('Erro ao converter base64 para blob:', error);
-    throw new Error(`Erro na conversão do PDF - formato inválido: ${error.message}`);
+    throw new Error(`Erro na conversão do PDF: ${error.message}`);
   }
 };
