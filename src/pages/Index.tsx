@@ -18,7 +18,9 @@ const Index = () => {
   const hasAccessToPremium = isEnterprise || isAdmin;
 
   useEffect(() => {
+    console.log('🔄 Index: Getting user...');
     supabase.auth.getUser().then(({ data: { user } }) => {
+      console.log('🔄 Index: User loaded:', user?.email || 'no user');
       setUser(user);
     });
   }, []);

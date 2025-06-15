@@ -16,17 +16,12 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          {/* Página principal protegida - com AuthGuard */}
-          <Route path="/" element={
-            <AuthGuard>
-              <Index />
-            </AuthGuard>
-          } />
-          
-          {/* Página 404 para rotas não encontradas */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthGuard>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthGuard>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
