@@ -30,25 +30,69 @@ export const generatePDF = async (budgetData: BudgetData) => {
     // Método de geração padrão
     const pdf = new jsPDF();
     
-    // Definir cores baseadas na customização
+    // Definir cores - Corrigir a lógica de seleção
     let theme;
-    if (budgetData.advancedCustomization) {
-      theme = {
-        primary: budgetData.advancedCustomization.customColors.primary,
-        secondary: budgetData.advancedCustomization.customColors.secondary,
-        accent: budgetData.advancedCustomization.customColors.accent,
-        text: budgetData.advancedCustomization.customColors.text
-      };
-    } else if (budgetData.exclusiveTemplate) {
+    
+    console.log('BudgetData recebido:', budgetData);
+    console.log('Color theme selecionado:', budgetData.colorTheme);
+    console.log('Advanced customization:', budgetData.advancedCustomization);
+    console.log('Premium template:', budgetData.premiumTemplate);
+    console.log('Exclusive template:', budgetData.exclusiveTemplate);
+
+    // Prioridade: Advanced > Exclusive > Premium > Color Theme padrão
+    if (budgetData.advancedCustomization?.customColors) {
+      console.log('Usando cores da customização avançada');
+      theme = budgetData.advancedCustomization.customColors;
+    } else if (budgetData.exclusiveTemplate?.colorScheme) {
+      console.log('Usando cores do template exclusivo');
       theme = budgetData.exclusiveTemplate.colorScheme;
-    } else if (budgetData.premiumTemplate) {
+    } else if (budgetData.premiumTemplate?.colorScheme) {
+      console.log('Usando cores do template premium');
       theme = budgetData.premiumTemplate.colorScheme;
     } else {
-      theme = COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES] || COLOR_THEMES.blue;
+      // Usar tema de cor padrão
+      const selectedTheme = budgetData.colorTheme || 'blue';
+      console.log('Usando tema padrão:', selectedTheme);
+      theme = COLOR_THEMES[selectedTheme as keyof typeof COLOR_THEMES] || COLOR_THEMES.blue;
     }
 
-    console.log('Usando tema de cores no PDF:', theme);
-    
+    console.log('Tema final selecionado:', theme);
+
+    // Função para converter hex para RGB
+    const hexToRgb = (hex: string) => {
+      // Remover # se existir
+      hex = hex.replace('#', '');
+      
+      // Se for cor de 3 dígitos, expandir para 6
+      if (hex.length === 3) {
+        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+      }
+      
+      const result = /^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      if (result) {
+        return {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16)
+        };
+      } else {
+        console.warn('Cor inválida:', hex, 'usando azul padrão');
+        return { r: 59, g: 130, b: 246 }; // fallback para azul
+      }
+    };
+
+    const primaryRgb = hexToRgb(theme.primary);
+    const secondaryRgb = hexToRgb(theme.secondary);
+    const accentRgb = theme.accent ? hexToRgb(theme.accent) : { r: 219, g: 234, b: 254 };
+    const textRgb = theme.text ? hexToRgb(theme.text) : { r: 0, g: 0, b: 0 };
+
+    console.log('Cores RGB calculadas:', {
+      primary: primaryRgb,
+      secondary: secondaryRgb,
+      accent: accentRgb,
+      text: textRgb
+    });
+
     // Configurações para A4
     const pageWidth = 210;
     const pageHeight = 297;
@@ -56,19 +100,6 @@ export const generatePDF = async (budgetData: BudgetData) => {
     const contentWidth = pageWidth - 2 * margin;
     let yPosition = 30;
     let currentPage = 1;
-
-    // Função para converter hex para RGB
-    const hexToRgb = (hex: string) => {
-      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16)
-      } : { r: 59, g: 130, b: 246 }; // fallback para azul
-    };
-
-    const primaryRgb = hexToRgb(theme.primary);
-    const secondaryRgb = hexToRgb(theme.secondary);
 
     // Função para verificar se precisa de nova página
     const checkPageBreak = (spaceNeeded: number) => {
@@ -84,7 +115,8 @@ export const generatePDF = async (budgetData: BudgetData) => {
 
     // Função para adicionar cabeçalho em cada página
     const addPageHeader = () => {
-      // Cabeçalho com cor do tema personalizada
+      // Cabeçalho com cor primária
+      console.log('Aplicando cor primária no cabeçalho:', primaryRgb);
       pdf.setFillColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
       pdf.rect(0, 0, pageWidth, 25, 'F');
       
@@ -121,18 +153,18 @@ export const generatePDF = async (budgetData: BudgetData) => {
 
     // Função para adicionar seção com fundo colorido
     const addSection = (title: string, yPos: number) => {
-      // Usar cor de accent personalizada ou fallback
-      const accentRgb = theme.accent ? hexToRgb(theme.accent) : { r: 219, g: 234, b: 254 };
+      // Usar cor de accent
+      console.log('Aplicando cor accent na seção:', accentRgb);
       pdf.setFillColor(accentRgb.r, accentRgb.g, accentRgb.b);
       pdf.rect(margin, yPos - 5, contentWidth, 12, 'F');
       
+      // Título com cor primária
       pdf.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
       pdf.setFontSize(14);
       pdf.setFont('helvetica', 'bold');
       pdf.text(title, margin + 2, yPos + 3);
       
-      // Usar cor de texto personalizada se disponível
-      const textRgb = theme.text ? hexToRgb(theme.text) : { r: 0, g: 0, b: 0 };
+      // Resetar para cor de texto padrão
       pdf.setTextColor(textRgb.r, textRgb.g, textRgb.b);
     };
 
@@ -175,9 +207,6 @@ export const generatePDF = async (budgetData: BudgetData) => {
     addSection('DADOS DO CLIENTE', yPosition);
     yPosition += 15;
 
-    pdf.setFontSize(10);
-    pdf.setFont('helvetica', 'normal');
-
     const clientData = [
       `Cliente: ${budgetData.clientInfo.name}`,
       `Email: ${budgetData.clientInfo.email}`,
@@ -217,7 +246,6 @@ Confiamos que nossa proposta atenderá perfeitamente às suas expectativas, ofer
     pdf.setDrawColor(200, 200, 200);
     pdf.rect(margin, yPosition - 5, contentWidth, 10);
     
-    const textRgb = theme.text ? hexToRgb(theme.text) : { r: 0, g: 0, b: 0 };
     pdf.setTextColor(textRgb.r, textRgb.g, textRgb.b);
     pdf.setFontSize(9);
     pdf.setFont('helvetica', 'bold');
@@ -260,11 +288,12 @@ Confiamos que nossa proposta atenderá perfeitamente às suas expectativas, ofer
 
     yPosition += 10;
 
-    // Totais em caixa destacada
+    // Totais em caixa destacada com cor primária
     checkPageBreak(40);
     
     pdf.setFillColor(248, 249, 250);
     pdf.setDrawColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+    pdf.setLineWidth(2);
     pdf.rect(margin + 80, yPosition, contentWidth - 80, 35, 'FD');
     
     pdf.setFontSize(11);
@@ -306,8 +335,9 @@ Confiamos que nossa proposta atenderá perfeitamente às suas expectativas, ofer
       yPosition += observationsHeight + 20;
     }
 
-    // Chamada para ação
+    // Chamada para ação com cor primária
     checkPageBreak(40);
+    console.log('Aplicando cor primária na CTA:', primaryRgb);
     pdf.setFillColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
     pdf.rect(margin, yPosition - 5, contentWidth, 35, 'F');
     
@@ -334,6 +364,8 @@ Confiamos que nossa proposta atenderá perfeitamente às suas expectativas, ofer
     // Salvar o PDF
     const fileName = `Orcamento_${budgetData.clientInfo.name.replace(/\s+/g, '_')}_${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}.pdf`;
     pdf.save(fileName);
+
+    console.log('PDF gerado com sucesso com as cores:', theme);
 
   } catch (error) {
     console.error('Erro detalhado na geração de PDF:', error);
