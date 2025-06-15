@@ -25,16 +25,22 @@ export const generatePDF = async (budgetData: BudgetData) => {
       console.log('Geração segura falhou, usando método padrão:', secureError);
     }
 
-    // Método de geração padrão com cores funcionais
+    // Método de geração padrão com layout funcional
     const pdf = new jsPDF();
     
-    // Selecionar tema corretamente
-    const selectedTheme = budgetData.colorTheme || 'blue';
-    const theme = COLOR_THEMES[selectedTheme as keyof typeof COLOR_THEMES] || COLOR_THEMES.blue;
+    // Selecionar tema de cor
+    let selectedTheme = budgetData.colorTheme || 'blue';
+    console.log('Tema do orçamento:', selectedTheme);
     
-    console.log('Tema selecionado para PDF padrão:', selectedTheme, theme);
+    // Verificar se existe no COLOR_THEMES
+    if (!COLOR_THEMES[selectedTheme as keyof typeof COLOR_THEMES]) {
+      selectedTheme = 'blue';
+    }
+    
+    const theme = COLOR_THEMES[selectedTheme as keyof typeof COLOR_THEMES];
+    console.log('Tema aplicado:', theme);
 
-    // Função para converter hex para RGB
+    // Função para converter hex para RGB (0-255)
     const hexToRgb = (hex: string): [number, number, number] => {
       const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
       if (result) {
@@ -44,16 +50,15 @@ export const generatePDF = async (budgetData: BudgetData) => {
           parseInt(result[3], 16)
         ];
       }
-      return [59, 130, 246]; // fallback azul
+      return [59, 130, 246]; // azul padrão
     };
 
     const primaryColor = hexToRgb(theme.primary);
     const accentColor = hexToRgb(theme.accent);
 
-    console.log('Cores RGB aplicadas:', { primary: primaryColor, accent: accentColor });
+    console.log('Cores RGB:', { primary: primaryColor, accent: accentColor });
 
     const pageWidth = 210;
-    const pageHeight = 297;
     const margin = 20;
     const contentWidth = pageWidth - 2 * margin;
     let yPosition = 30;
@@ -63,106 +68,89 @@ export const generatePDF = async (budgetData: BudgetData) => {
     pdf.rect(0, 0, pageWidth, 25, 'F');
     
     pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(20);
+    pdf.setFontSize(18);
     pdf.setFont('helvetica', 'bold');
-    pdf.text(`${budgetData.companyInfo.name} - ORÇAMENTO`, margin, 18);
+    pdf.text('ORÇAMENTO', margin, 18);
 
+    // Informações do cabeçalho
     const currentDate = new Date().toLocaleDateString('pt-BR');
     const budgetNumber = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
     pdf.setFontSize(10);
-    pdf.text(`Data: ${currentDate}`, pageWidth - margin - 40, 12);
-    pdf.text(`Nº: ${budgetNumber}`, pageWidth - margin - 40, 18);
+    pdf.text(`Data: ${currentDate} | Nº: ${budgetNumber}`, pageWidth - 80, 12);
 
     yPosition = 40;
 
-    // Função para seções com cores
-    const addSection = (title: string, yPos: number) => {
+    // Função para criar seção com fundo colorido
+    const addColoredSection = (title: string, yPos: number) => {
       pdf.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
-      pdf.rect(margin, yPos - 5, contentWidth, 12, 'F');
+      pdf.rect(margin, yPos - 5, contentWidth, 10, 'F');
       
       pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      pdf.setFontSize(14);
+      pdf.setFontSize(12);
       pdf.setFont('helvetica', 'bold');
-      pdf.text(title, margin + 2, yPos + 3);
+      pdf.text(title, margin + 2, yPos + 2);
       
       pdf.setTextColor(0, 0, 0);
+      return yPos + 12;
     };
 
-    // Dados da empresa
-    addSection('DADOS DA EMPRESA', yPosition);
-    yPosition += 15;
-
+    // Seção Empresa
+    yPosition = addColoredSection('EMPRESA:', yPosition);
+    
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'normal');
-    
-    const companyData = [
-      `Empresa: ${budgetData.companyInfo.name}`,
-      `Email: ${budgetData.companyInfo.email}`,
-      `Telefone: ${budgetData.companyInfo.phone}`,
-      `Endereço: ${budgetData.companyInfo.address}`
-    ];
-
-    companyData.forEach(line => {
-      pdf.text(line, margin + 2, yPosition);
-      yPosition += 5;
-    });
+    pdf.text(budgetData.companyInfo.name, margin + 2, yPosition);
+    yPosition += 5;
+    pdf.text(budgetData.companyInfo.email, margin + 2, yPosition);
+    yPosition += 5;
+    pdf.text(budgetData.companyInfo.phone, margin + 2, yPosition);
     yPosition += 10;
 
-    // Dados do cliente
-    addSection('DADOS DO CLIENTE', yPosition);
-    yPosition += 15;
-
-    const clientData = [
-      `Cliente: ${budgetData.clientInfo.name}`,
-      `Email: ${budgetData.clientInfo.email}`,
-      `Telefone: ${budgetData.clientInfo.phone}`,
-      `Endereço: ${budgetData.clientInfo.address}`
-    ];
-
-    clientData.forEach(line => {
-      pdf.text(line, margin + 2, yPosition);
-      yPosition += 5;
-    });
-    yPosition += 15;
-
-    // Tabela de itens
-    addSection('DETALHAMENTO DOS SERVIÇOS', yPosition);
-    yPosition += 15;
-
-    // Cabeçalho da tabela com cor de fundo
-    pdf.setFillColor(245, 245, 245);
-    pdf.rect(margin, yPosition - 5, contentWidth, 10, 'F');
+    // Seção Cliente
+    yPosition = addColoredSection('CLIENTE:', yPosition);
     
-    pdf.setTextColor(0, 0, 0);
+    pdf.text(budgetData.clientInfo.name, margin + 2, yPosition);
+    yPosition += 5;
+    pdf.text(budgetData.clientInfo.email, margin + 2, yPosition);
+    yPosition += 5;
+    pdf.text(budgetData.clientInfo.phone, margin + 2, yPosition);
+    yPosition += 15;
+
+    // Seção Itens
+    yPosition = addColoredSection('ITENS DO ORÇAMENTO:', yPosition);
+
+    // Cabeçalho da tabela
+    pdf.setFillColor(245, 245, 245);
+    pdf.rect(margin, yPosition - 2, contentWidth, 8, 'F');
+    
     pdf.setFontSize(9);
     pdf.setFont('helvetica', 'bold');
-    
-    const col1 = margin + 2;
-    const col2 = margin + 90;
-    const col3 = margin + 115;
-    const col4 = margin + 145;
-    
-    pdf.text('DESCRIÇÃO', col1, yPosition);
-    pdf.text('QTD', col2, yPosition);
-    pdf.text('PREÇO UNIT.', col3, yPosition);
-    pdf.text('TOTAL', col4, yPosition);
-    yPosition += 8;
+    pdf.text('Qtd', margin + 2, yPosition + 3);
+    pdf.text('Descrição', margin + 20, yPosition + 3);
+    pdf.text('Preço Unit.', margin + 110, yPosition + 3);
+    pdf.text('Total', margin + 150, yPosition + 3);
+    yPosition += 10;
 
     // Itens
     pdf.setFont('helvetica', 'normal');
     let subtotal = 0;
     
     budgetData.items.forEach((item, index) => {
-      if (index % 2 === 0) {
-        pdf.setFillColor(250, 250, 250);
-        pdf.rect(margin, yPosition - 4, contentWidth, 8, 'F');
+      if (yPosition > 250) { // Nova página se necessário
+        pdf.addPage();
+        yPosition = 30;
       }
       
-      const description = item.description.length > 30 ? item.description.substring(0, 30) + '...' : item.description;
-      pdf.text(description, col1, yPosition);
-      pdf.text(item.quantity.toString(), col2, yPosition);
-      pdf.text(`R$ ${item.unitPrice.toFixed(2)}`, col3, yPosition);
-      pdf.text(`R$ ${item.total.toFixed(2)}`, col4, yPosition);
+      if (index % 2 === 0) {
+        pdf.setFillColor(250, 250, 250);
+        pdf.rect(margin, yPosition - 2, contentWidth, 7, 'F');
+      }
+      
+      const description = item.description.length > 35 ? item.description.substring(0, 35) + '...' : item.description;
+      pdf.text(item.quantity.toString(), margin + 2, yPosition + 2);
+      pdf.text(description, margin + 20, yPosition + 2);
+      pdf.text(`R$ ${item.unitPrice.toFixed(2)}`, margin + 110, yPosition + 2);
+      pdf.text(`R$ ${item.total.toFixed(2)}`, margin + 150, yPosition + 2);
       
       subtotal += item.total;
       yPosition += 8;
@@ -170,15 +158,13 @@ export const generatePDF = async (budgetData: BudgetData) => {
 
     yPosition += 10;
 
-    // Totais com cor primária
-    pdf.setFillColor(248, 249, 250);
+    // Box de totais com cor
     pdf.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    pdf.setLineWidth(2);
-    pdf.rect(margin + 80, yPosition, contentWidth - 80, 35, 'FD');
+    pdf.setLineWidth(1);
+    pdf.rect(margin + 80, yPosition, contentWidth - 80, 30);
     
     pdf.setFontSize(11);
     pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(0, 0, 0);
     
     pdf.text('Subtotal:', margin + 85, yPosition + 8);
     pdf.text(`R$ ${subtotal.toFixed(2)}`, margin + 130, yPosition + 8);
@@ -191,30 +177,34 @@ export const generatePDF = async (budgetData: BudgetData) => {
     const totalFinal = subtotal - (subtotal * budgetData.discount / 100);
     pdf.setFontSize(14);
     pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    pdf.text('TOTAL FINAL:', margin + 85, yPosition + 28);
-    pdf.text(`R$ ${totalFinal.toFixed(2)}`, margin + 130, yPosition + 28);
+    pdf.text('TOTAL FINAL:', margin + 85, yPosition + 24);
+    pdf.text(`R$ ${totalFinal.toFixed(2)}`, margin + 130, yPosition + 24);
     
-    yPosition += 45;
+    yPosition += 40;
 
-    // CTA com cor primária
-    pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    pdf.rect(margin, yPosition - 5, contentWidth, 35, 'F');
-    
-    pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(16);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('PRONTO PARA COMEÇAR?', margin + 5, yPosition + 8);
-    
+    // Informações adicionais
+    pdf.setTextColor(0, 0, 0);
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'normal');
-    const ctaText = `Este orçamento tem validade de ${budgetData.validityDays} dias. Entre em contato conosco!`;
-    pdf.text(ctaText, margin + 5, yPosition + 18);
+    pdf.text(`Validade: ${budgetData.validityDays} dias`, margin, yPosition);
+    yPosition += 8;
+    
+    if (budgetData.specialConditions) {
+      const conditions = budgetData.specialConditions.substring(0, 100);
+      pdf.text(conditions, margin, yPosition);
+      yPosition += 8;
+    }
+    
+    if (budgetData.observations) {
+      const obs = budgetData.observations.substring(0, 100);
+      pdf.text(obs, margin, yPosition);
+    }
 
-    // Salvar
+    // Salvar PDF
     const fileName = `Orcamento_${budgetData.clientInfo.name.replace(/\s+/g, '_')}_${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}.pdf`;
     pdf.save(fileName);
 
-    console.log('PDF padrão gerado com cores aplicadas!');
+    console.log('PDF gerado com layout funcional e cores aplicadas!');
 
   } catch (error) {
     console.error('Erro na geração de PDF:', error);
