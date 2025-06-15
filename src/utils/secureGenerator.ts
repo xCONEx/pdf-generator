@@ -5,28 +5,10 @@ import { BudgetData } from '@/types/budget';
 export const generateSecurePDF = async (budgetData: BudgetData): Promise<Blob> => {
   try {
     // Verificar licença do usuário
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       throw new Error('Usuário não autenticado');
     }
-
-    // Verificar se o usuário tem licença válida
-    const { data: license, error: licenseError } = await supabase
-      .from('user_licenses')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
-
-    if (licenseError || !license || license.status !== 'active') {
-      throw new Error('Licença inválida ou expirada');
-    }
-
-    // Verificar limite de PDFs
-    if (license.pdfs_generated >= license.pdf_limit) {
-      throw new Error('Limite de PDFs atingido');
-    }
-
-    console.log('Chamando Edge Function para gerar PDF...');
 
     // Chamar Edge Function para gerar PDF seguro
     const { data, error } = await supabase.functions.invoke('generate-secure-pdf', {
@@ -39,24 +21,14 @@ export const generateSecurePDF = async (budgetData: BudgetData): Promise<Blob> =
     });
 
     if (error) {
-      console.error('Erro na Edge Function:', error);
-      throw new Error(`Erro na geração segura: ${error.message}`);
+      throw error;
     }
 
-    if (!data || !data.pdf) {
-      throw new Error('PDF não foi gerado pela Edge Function');
-    }
-
-    console.log('PDF recebido da Edge Function, convertendo para blob...');
+    // Registrar geração do PDF
+    await logPdfGeneration(user.id, budgetData);
 
     // Converter base64 para Blob
     const pdfBlob = base64ToBlob(data.pdf, 'application/pdf');
-    console.log('Blob criado com sucesso, tamanho:', pdfBlob.size);
-    
-    if (pdfBlob.size === 0) {
-      throw new Error('PDF gerado está vazio');
-    }
-    
     return pdfBlob;
 
   } catch (error) {
@@ -66,60 +38,54 @@ export const generateSecurePDF = async (budgetData: BudgetData): Promise<Blob> =
 };
 
 const generateFingerprint = async (): Promise<string> => {
-  try {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    
-    if (ctx) {
-      ctx.textBaseline = 'top';
-      ctx.font = '14px Arial';
-      ctx.fillText('Security fingerprint', 2, 2);
-    }
-    
-    const fingerprint = [
-      navigator.userAgent,
-      navigator.language,
-      new Date().getTimezoneOffset(),
-      screen.width + 'x' + screen.height,
-      canvas.toDataURL(),
-    ].join('|');
-
-    let hash = 0;
-    for (let i = 0; i < fingerprint.length; i++) {
-      const char = fingerprint.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    
-    return Math.abs(hash).toString(16);
-  } catch (error) {
-    console.error('Erro ao gerar fingerprint:', error);
-    return 'fallback-' + Date.now().toString();
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  
+  if (ctx) {
+    ctx.textBaseline = 'top';
+    ctx.font = '14px Arial';
+    ctx.fillText('Security fingerprint', 2, 2);
   }
+  
+  const fingerprint = [
+    navigator.userAgent,
+    navigator.language,
+    new Date().getTimezoneOffset(),
+    screen.width + 'x' + screen.height,
+    canvas.toDataURL(),
+  ].join('|');
+
+  // Hash simples do fingerprint
+  let hash = 0;
+  for (let i = 0; i < fingerprint.length; i++) {
+    const char = fingerprint.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  
+  return Math.abs(hash).toString(16);
+};
+
+const logPdfGeneration = async (userId: string, budgetData: BudgetData) => {
+  await supabase.from('pdf_generations').insert({
+    user_id: userId,
+    client_name: budgetData.clientInfo.name,
+    total_value: budgetData.items.reduce((sum, item) => sum + item.total, 0),
+    fingerprint: await generateFingerprint(),
+  });
+
+  // Atualizar contador de PDFs da licença
+  await supabase.rpc('increment_pdf_count', { user_id: userId });
 };
 
 const base64ToBlob = (base64: string, contentType: string): Blob => {
-  try {
-    console.log('Convertendo base64 para blob, tamanho:', base64.length);
-    
-    if (!base64 || base64.length === 0) {
-      throw new Error('Base64 está vazio');
-    }
-    
-    const byteCharacters = atob(base64);
-    const byteNumbers = new Array(byteCharacters.length);
-    
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: contentType });
-    
-    console.log('Blob criado:', blob.size, 'bytes');
-    return blob;
-  } catch (error) {
-    console.error('Erro ao converter base64 para blob:', error);
-    throw new Error(`Erro na conversão do PDF: ${error.message}`);
+  const byteCharacters = atob(base64);
+  const byteNumbers = new Array(byteCharacters.length);
+  
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
   }
+  
+  const byteArray = new Uint8Array(byteNumbers);
+  return new Blob([byteArray], { type: contentType });
 };

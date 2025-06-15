@@ -5,22 +5,14 @@ import { useLicenseValidation } from '@/hooks/useLicenseValidation';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
-import { Card, CardContent } from '@/components/ui/card';
-import { Crown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const { license, loading, getPlanDisplayName } = useLicenseValidation();
 
-  // Check if user is admin
-  const isAdmin = user?.email === 'adm.financeflow@gmail.com' || user?.email === 'yuriadrskt@gmail.com';
-  const isEnterprise = license?.plan === 'enterprise';
-  const hasAccessToPremium = isEnterprise || isAdmin;
-
   useEffect(() => {
-    console.log('🔄 Index: Getting user...');
     supabase.auth.getUser().then(({ data: { user } }) => {
-      console.log('🔄 Index: User loaded:', user?.email || 'no user');
       setUser(user);
     });
   }, []);
@@ -57,8 +49,8 @@ const Index = () => {
     );
   }
 
-  // Verificar limite de PDFs (apenas para planos que não são enterprise e não são admin)
-  if (!hasAccessToPremium && license.pdfs_generated >= license.pdf_limit) {
+  // Verificar limite de PDFs (apenas para planos que não são enterprise)
+  if (license.plan !== 'enterprise' && license.pdfs_generated >= license.pdf_limit) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
@@ -87,29 +79,12 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4">
-        {/* Message for NON-Premium users */}
-        {!hasAccessToPremium && (
-          <div className="mb-8">
-            <Card className="border-2 border-dashed border-gray-300 bg-gray-50">
-              <CardContent className="p-8 text-center">
-                <Crown className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-2xl font-semibold mb-3 text-gray-600">Funcionalidades Premium</h3>
-                <p className="text-gray-500 mb-4 text-lg">
-                  Templates exclusivos e analytics avançados disponíveis apenas para usuários Enterprise e Admins.
-                </p>
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-4">
-                  <p className="text-sm text-yellow-700 font-medium">
-                    Seu plano atual: {getPlanDisplayName() || 'N/A'}
-                  </p>
-                  <p className="text-xs text-yellow-600 mt-1">
-                    Faça upgrade para Enterprise para desbloquear todas as funcionalidades
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Gerador de Orçamentos
+          </h1>
+        </div>
         
         {user && license && (
           <UserDashboard user={user} license={license} />

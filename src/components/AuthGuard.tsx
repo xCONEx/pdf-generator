@@ -18,11 +18,8 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
   const [showAdminPanel, setShowAdminPanel] = useState(false);
 
   useEffect(() => {
-    console.log('🔄 AuthGuard: Initializing...');
-    
     // Verificar sessão atual
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('🔄 AuthGuard: Session check:', session?.user?.email || 'no user');
       setUser(session?.user ?? null);
       setLoading(false);
     });
@@ -30,7 +27,6 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     // Escutar mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔄 AuthGuard: Auth state change:', event, session?.user?.email || 'no user');
         setUser(session?.user ?? null);
         setLoading(false);
       }
@@ -56,22 +52,10 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
 
   // Se é admin e quer ver o painel admin
   if (isAdmin && showAdminPanel) {
-    return (
-      <div>
-        <div className="fixed top-4 left-4 z-50">
-          <button
-            onClick={() => setShowAdminPanel(false)}
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
-          >
-            ← Voltar
-          </button>
-        </div>
-        <AdminPanel />
-      </div>
-    );
+    return <AdminPanel />;
   }
 
-  // Se é admin mas não está no painel admin, mostrar o app com botão para admin
+  // Se é admin mas não está no painel admin, mostrar o gerador com botão para admin
   if (isAdmin) {
     return (
       <div>

@@ -63,8 +63,6 @@ export const useCompanyProfile = () => {
         throw new Error('Usuário não autenticado');
       }
 
-      console.log('Salvando dados da empresa:', companyInfo);
-
       const profileData = {
         user_id: user.id,
         name: companyInfo.name,
@@ -72,24 +70,17 @@ export const useCompanyProfile = () => {
         phone: companyInfo.phone,
         address: companyInfo.address,
         logo_url: companyInfo.logoUrl,
-        created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
 
-      // Use upsert with the unique constraint on user_id
       const { error } = await supabase
         .from('company_profiles')
-        .upsert(profileData, { 
-          onConflict: 'user_id',
-          ignoreDuplicates: false 
+        .upsert(profileData, {
+          onConflict: 'user_id'
         });
 
-      if (error) {
-        console.error('Erro detalhado ao salvar:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log('Perfil salvo com sucesso');
       setCompanyProfile(companyInfo);
       toast({
         title: "Sucesso!",
