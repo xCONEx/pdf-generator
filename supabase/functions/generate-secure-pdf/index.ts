@@ -84,10 +84,19 @@ async function generateSecurePDF(budgetData: any, userId: string, fingerprint: s
   try {
     console.log('Iniciando geração do PDF seguro...');
     
-    // Usando apenas cor azul padrão
-    const color = { r: 0.16, g: 0.50, b: 0.73 };
+    // Mapeamento das cores dos temas
+    const COLOR_THEMES = {
+      blue: { r: 0.16, g: 0.50, b: 0.73 },
+      green: { r: 0.09, g: 0.63, b: 0.52 },
+      purple: { r: 0.56, g: 0.27, b: 0.68 },
+      red: { r: 0.91, g: 0.30, b: 0.24 },
+      orange: { r: 0.90, g: 0.49, b: 0.13 }
+    };
     
-    console.log('Usando cor azul padrão:', color);
+    // Usar a cor do tema selecionado ou azul como padrão
+    const selectedColor = COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES] || COLOR_THEMES.blue;
+    
+    console.log('Usando cor do tema:', budgetData.colorTheme, selectedColor);
     
     const subtotal = budgetData.items.reduce((sum: number, item: any) => sum + (item.total || 0), 0);
     const desconto = subtotal * (budgetData.discount || 0) / 100;
@@ -149,7 +158,7 @@ endobj
 >>
 stream
 q
-${color.r} ${color.g} ${color.b} rg
+${selectedColor.r} ${selectedColor.g} ${selectedColor.b} rg
 0 760 612 32 re
 f
 Q
@@ -165,7 +174,7 @@ BT
 ET
 
 q
-${color.r} ${color.g} ${color.b} rg
+${selectedColor.r} ${selectedColor.g} ${selectedColor.b} rg
 20 715 572 15 re
 f
 Q
@@ -188,7 +197,7 @@ BT
 ET
 
 q
-${color.r} ${color.g} ${color.b} rg
+${selectedColor.r} ${selectedColor.g} ${selectedColor.b} rg
 20 615 572 15 re
 f
 Q
@@ -211,7 +220,7 @@ BT
 ET
 
 q
-${color.r} ${color.g} ${color.b} rg
+${selectedColor.r} ${selectedColor.g} ${selectedColor.b} rg
 20 515 572 15 re
 f
 Q
@@ -230,7 +239,7 @@ BT
 0 -30 Td
 
 q
-${color.r} ${color.g} ${color.b} RG
+${selectedColor.r} ${selectedColor.g} ${selectedColor.b} RG
 2 w
 400 0 180 90 re
 S
@@ -242,7 +251,7 @@ Q
 0 -15 Td
 (Desconto: R$ ${desconto.toFixed(2)}) Tj
 0 -15 Td
-${color.r} ${color.g} ${color.b} rg
+${selectedColor.r} ${selectedColor.g} ${selectedColor.b} rg
 /F1 14 Tf
 (TOTAL: R$ ${total.toFixed(2)}) Tj
 0 0 0 rg
@@ -257,7 +266,7 @@ ${color.r} ${color.g} ${color.b} rg
 ET
 
 q
-${color.r} ${color.g} ${color.b} rg
+${selectedColor.r} ${selectedColor.g} ${selectedColor.b} rg
 20 120 572 30 re
 f
 Q

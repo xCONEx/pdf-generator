@@ -1,6 +1,6 @@
 
 import jsPDF from 'jspdf';
-import { BudgetData } from '@/types/budget';
+import { BudgetData, COLOR_THEMES } from '@/types/budget';
 import { generateSecurePDF } from './secureGenerator';
 
 export const generatePDF = async (budgetData: BudgetData) => {
@@ -25,19 +25,29 @@ export const generatePDF = async (budgetData: BudgetData) => {
       console.log('Geração segura falhou, usando método padrão:', secureError);
     }
 
-    // Método padrão com cor azul fixa
+    // Método padrão com cores do tema selecionado
     const pdf = new jsPDF();
     const pageWidth = 210;
     const margin = 15;
     let yPosition = 25;
 
-    // Cor azul padrão que sempre funciona
-    const primaryColor = [41, 128, 185]; // RGB azul
+    // Usar a cor do tema selecionado
+    const selectedTheme = COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES] || COLOR_THEMES.blue;
+    const hexToRgb = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? [
+        parseInt(result[1], 16),
+        parseInt(result[2], 16),
+        parseInt(result[3], 16)
+      ] : [41, 128, 185]; // Azul padrão
+    };
+    
+    const primaryColor = hexToRgb(selectedTheme.primary);
     
     // Configurar fonte padrão
     pdf.setFont('helvetica');
 
-    // Cabeçalho azul
+    // Cabeçalho com cor do tema
     pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
     pdf.rect(0, 0, pageWidth, 30, 'F');
     
