@@ -55,8 +55,12 @@ serve(async (req) => {
       );
     }
 
+    console.log('Gerando PDF para:', budgetData.clientInfo.name);
+
     // Gerar PDF completo
     const pdfContent = await generateCompletePDF(budgetData, userId, fingerprint);
+
+    console.log('PDF gerado, tamanho:', pdfContent.length);
 
     // Registrar geração
     await supabase.from('pdf_generations').insert({
@@ -87,6 +91,8 @@ serve(async (req) => {
 
 async function generateCompletePDF(budgetData: any, userId: string, fingerprint: string): Promise<string> {
   try {
+    console.log('Iniciando geração do PDF...');
+    
     // Calcular totais
     const subtotal = budgetData.items.reduce((sum: number, item: any) => sum + (item.total || 0), 0);
     const desconto = subtotal * (budgetData.discount || 0) / 100;
@@ -95,8 +101,14 @@ async function generateCompletePDF(budgetData: any, userId: string, fingerprint:
     // Watermark de segurança
     const watermark = `ID: ${userId.slice(-8)} | FP: ${fingerprint} | ${new Date().toISOString()}`;
     
-    // Gerar PDF básico mas funcional
-    const pdfContent = `%PDF-1.4
+    // Criar conteúdo dos itens
+    const itemsContent = budgetData.items.map((item: any, index: number) => {
+      const desc = item.description.length > 25 ? item.description.substring(0, 25) + '...' : item.description;
+      return `${item.quantity.toString().padEnd(4)} ${desc.padEnd(30)} R$ ${item.unitPrice.toFixed(2).padStart(10)} R$ ${item.total.toFixed(2).padStart(12)}`;
+    }).join('\n');
+
+    // Template PDF mais robusto
+    const pdfTemplate = `%PDF-1.4
 1 0 obj
 <<
 /Type /Catalog
@@ -121,6 +133,7 @@ endobj
 /Resources <<
 /Font <<
 /F1 5 0 R
+/F2 6 0 R
 >>
 >>
 >>
@@ -128,42 +141,64 @@ endobj
 
 4 0 obj
 <<
-/Length 800
+/Length ${1200 + itemsContent.length}
 >>
 stream
 BT
-/F1 16 Tf
+/F1 20 Tf
 50 750 Td
 (ORCAMENTO) Tj
-0 -30 Td
-/F1 12 Tf
-(Empresa: ${budgetData.companyInfo.name || 'N/A'}) Tj
-0 -20 Td
-(Cliente: ${budgetData.clientInfo.name || 'N/A'}) Tj
-0 -20 Td
-(Email: ${budgetData.clientInfo.email || 'N/A'}) Tj
-0 -30 Td
-(ITENS:) Tj
-0 -20 Td
-(Qtd  Descricao                    Preco Unit.  Total) Tj
-0 -15 Td
-(${budgetData.items.map((item: any, index: number) => 
-  `${item.quantity}   ${item.description.substring(0, 20)}${item.description.length > 20 ? '...' : ''}   R$ ${item.unitPrice.toFixed(2)}   R$ ${item.total.toFixed(2)}`
-).join('\n')}) Tj
 0 -40 Td
-(Subtotal: R$ ${subtotal.toFixed(2)}) Tj
-0 -15 Td
-(Desconto: R$ ${desconto.toFixed(2)}) Tj
-0 -15 Td
+
 /F1 14 Tf
-(TOTAL: R$ ${total.toFixed(2)}) Tj
+(EMPRESA:) Tj
+0 -20 Td
+/F2 12 Tf
+(${(budgetData.companyInfo.name || 'N/A').substring(0, 50)}) Tj
+0 -15 Td
+(${(budgetData.companyInfo.email || 'N/A').substring(0, 50)}) Tj
+0 -15 Td
+(${(budgetData.companyInfo.phone || 'N/A').substring(0, 30)}) Tj
+0 -25 Td
+
+/F1 14 Tf
+(CLIENTE:) Tj
+0 -20 Td
+/F2 12 Tf
+(${(budgetData.clientInfo.name || 'N/A').substring(0, 50)}) Tj
+0 -15 Td
+(${(budgetData.clientInfo.email || 'N/A').substring(0, 50)}) Tj
+0 -15 Td
+(${(budgetData.clientInfo.phone || 'N/A').substring(0, 30)}) Tj
 0 -30 Td
-/F1 10 Tf
+
+/F1 14 Tf
+(ITENS DO ORCAMENTO:) Tj
+0 -25 Td
+/F2 10 Tf
+(Qtd  Descricao                    Preco Unit.      Total) Tj
+0 -15 Td
+(${itemsContent}) Tj
+0 -30 Td
+
+/F1 12 Tf
+(Subtotal: R$ ${subtotal.toFixed(2)}) Tj
+0 -18 Td
+(Desconto: R$ ${desconto.toFixed(2)}) Tj
+0 -18 Td
+/F1 16 Tf
+(TOTAL FINAL: R$ ${total.toFixed(2)}) Tj
+0 -35 Td
+
+/F2 10 Tf
 (Validade: ${budgetData.validityDays || 30} dias) Tj
 0 -20 Td
-(${budgetData.specialConditions || 'Sem condicoes especiais'}) Tj
-0 -40 Td
-/F1 8 Tf
+(${(budgetData.specialConditions || 'Sem condicoes especiais').substring(0, 80)}) Tj
+0 -25 Td
+(${(budgetData.observations || '').substring(0, 80)}) Tj
+0 -35 Td
+
+/F2 8 Tf
 (${watermark}) Tj
 ET
 endstream
@@ -173,43 +208,72 @@ endobj
 <<
 /Type /Font
 /Subtype /Type1
+/BaseFont /Helvetica-Bold
+>>
+endobj
+
+6 0 obj
+<<
+/Type /Font
+/Subtype /Type1
 /BaseFont /Helvetica
 >>
 endobj
 
 xref
-0 6
+0 7
 0000000000 65535 f 
 0000000009 00000 n 
 0000000058 00000 n 
 0000000115 00000 n 
 0000000273 00000 n 
-0000001125 00000 n 
+0000001400 00000 n 
+0000001468 00000 n 
 trailer
 <<
-/Size 6
+/Size 7
 /Root 1 0 R
 >>
 startxref
-1203
+1531
 %%EOF`;
 
-    // Converter para base64 corretamente
+    console.log('PDF template criado, convertendo para base64...');
+
+    // Converter para bytes usando TextEncoder
     const encoder = new TextEncoder();
-    const pdfBytes = encoder.encode(pdfContent);
+    const pdfBytes = encoder.encode(pdfTemplate);
     
-    // Usar btoa corretamente
-    let base64String = '';
-    const chunk = 1024;
-    for (let i = 0; i < pdfBytes.length; i += chunk) {
-      const chunkBytes = pdfBytes.slice(i, i + chunk);
-      base64String += btoa(String.fromCharCode(...chunkBytes));
+    console.log('PDF bytes criados:', pdfBytes.length);
+
+    // Converter para base64 de forma segura
+    const base64Chunks: string[] = [];
+    const chunkSize = 3000; // Tamanho do chunk menor para evitar problemas
+    
+    for (let i = 0; i < pdfBytes.length; i += chunkSize) {
+      const chunk = pdfBytes.slice(i, i + chunkSize);
+      const chunkString = String.fromCharCode(...chunk);
+      base64Chunks.push(btoa(chunkString));
+    }
+    
+    const base64String = base64Chunks.join('');
+    
+    console.log('Base64 gerado, tamanho:', base64String.length);
+    
+    // Validar se o base64 é válido
+    try {
+      // Testar se conseguimos decodificar
+      const testDecode = atob(base64String.substring(0, 100));
+      console.log('Base64 válido, teste de decode ok');
+    } catch (testError) {
+      console.error('Base64 inválido:', testError);
+      throw new Error('Base64 gerado é inválido');
     }
     
     return base64String;
     
   } catch (error) {
     console.error('Erro ao gerar PDF:', error);
-    throw new Error('Falha na geração do PDF');
+    throw new Error(`Falha na geração do PDF: ${error.message}`);
   }
 }

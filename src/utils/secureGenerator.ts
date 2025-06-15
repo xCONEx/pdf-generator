@@ -105,26 +105,57 @@ const generateFingerprint = async (): Promise<string> => {
   }
 };
 
-const base64ToBlob = (base64: string, contentType: string): Blob => {
+const base64ToBlob = (base64: string, contentType: string): Blob => => {
   try {
-    // Limpar qualquer caractere inválido
-    const cleanBase64 = base64.replace(/[^A-Za-z0-9+/=]/g, '');
+    console.log('Convertendo base64 para blob, tamanho:', base64.length);
     
-    // Decodificar base64
-    const byteCharacters = atob(cleanBase64);
-    const byteNumbers = new Array(byteCharacters.length);
-    
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    // Validar se o base64 não está vazio
+    if (!base64 || base64.length === 0) {
+      throw new Error('Base64 está vazio');
     }
     
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: contentType });
+    // Limpar qualquer caractere inválido e validar formato
+    const cleanBase64 = base64.replace(/[^A-Za-z0-9+/=]/g, '');
+    
+    // Verificar se o tamanho é válido (múltiplo de 4)
+    if (cleanBase64.length % 4 !== 0) {
+      throw new Error('Base64 com formato inválido');
+    }
+    
+    console.log('Base64 limpo, tamanho:', cleanBase64.length);
+    
+    // Decodificar base64 em chunks para evitar problemas de memória
+    const chunkSize = 1024;
+    const byteArrays: Uint8Array[] = [];
+    
+    for (let offset = 0; offset < cleanBase64.length; offset += chunkSize) {
+      const chunk = cleanBase64.slice(offset, offset + chunkSize);
+      const byteCharacters = atob(chunk);
+      const byteNumbers = new Array(byteCharacters.length);
+      
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      
+      byteArrays.push(new Uint8Array(byteNumbers));
+    }
+    
+    // Combinar todos os chunks
+    const totalLength = byteArrays.reduce((sum, arr) => sum + arr.length, 0);
+    const result = new Uint8Array(totalLength);
+    let offset = 0;
+    
+    for (const arr of byteArrays) {
+      result.set(arr, offset);
+      offset += arr.length;
+    }
+    
+    const blob = new Blob([result], { type: contentType });
     
     console.log('Blob criado:', blob.size, 'bytes');
     return blob;
   } catch (error) {
     console.error('Erro ao converter base64 para blob:', error);
-    throw new Error('Erro na conversão do PDF - formato inválido');
+    throw new Error(`Erro na conversão do PDF - formato inválido: ${error.message}`);
   }
 };
