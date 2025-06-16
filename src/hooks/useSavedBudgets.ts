@@ -34,12 +34,12 @@ export const useSavedBudgets = () => {
       const formattedBudgets: SavedBudget[] = (budgets || []).map(budget => ({
         id: budget.id,
         clientName: budget.client_name,
-        budgetTitle: `Orçamento para ${budget.client_name}`, // Criar título baseado no cliente
+        budgetTitle: `Orçamento para ${budget.client_name}`,
         value: Number(budget.total_value),
-        finalValue: Number(budget.total_value), // Usar total_value como final_value
+        finalValue: Number(budget.total_value),
         createdAt: budget.created_at,
         items: Array.isArray(budget.items) ? budget.items.length : 0,
-        status: 'Rascunho' // Valor padrão já que não temos campo status
+        status: 'Rascunho'
       }));
 
       setSavedBudgets(formattedBudgets);
@@ -74,6 +74,9 @@ export const useSavedBudgets = () => {
         title: "Sucesso!",
         description: `${budgetIds.length} orçamento(s) excluído(s) com sucesso.`,
       });
+
+      // Recarregar dados para garantir consistência
+      await loadSavedBudgets();
     } catch (error) {
       console.error('Erro ao excluir orçamentos:', error);
       toast({
