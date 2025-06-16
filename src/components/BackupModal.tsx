@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,6 +43,10 @@ const BackupModal = ({ open, onOpenChange }: BackupModalProps) => {
     
     await deleteBudgets(selectedBackups);
     setSelectedBackups([]);
+  };
+
+  const handleDeleteSingle = async (budgetId: string) => {
+    await deleteBudgets([budgetId]);
   };
 
   const handleLoadBudget = async (budgetId: string) => {
@@ -228,6 +231,16 @@ const BackupModal = ({ open, onOpenChange }: BackupModalProps) => {
                             }}
                           >
                             <Download className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteSingle(budget.id);
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </div>
