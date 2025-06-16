@@ -2,7 +2,7 @@
 import { User } from '@supabase/supabase-js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Crown, FileText, Calendar } from 'lucide-react';
+import { BarChart3, Crown, FileText, Calendar, Database } from 'lucide-react';
 
 interface UserLicense {
   id: string;
@@ -105,7 +105,7 @@ const UserDashboard = ({ user, license }: UserDashboardProps) => {
             <CardHeader>
               <CardTitle className="flex items-center text-blue-800">
                 <BarChart3 className="w-5 h-5 mr-2" />
-                Analytics Avançados
+                Analytics Dashboard
                 <Crown className="w-4 h-4 ml-2 text-yellow-500" />
               </CardTitle>
             </CardHeader>
@@ -117,7 +117,7 @@ const UserDashboard = ({ user, license }: UserDashboardProps) => {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                 onClick={() => {
                   // Implementar navegação para analytics
-                  console.log('Navegar para Analytics');
+                  console.log('Navegar para Analytics Dashboard');
                 }}
               >
                 Ver Analytics
@@ -125,27 +125,27 @@ const UserDashboard = ({ user, license }: UserDashboardProps) => {
             </CardContent>
           </Card>
 
-          {/* Funcionalidades Premium */}
-          <Card className="border-green-200 bg-green-50">
+          {/* Backup de Orçamentos */}
+          <Card className="border-orange-200 bg-orange-50">
             <CardHeader>
-              <CardTitle className="flex items-center text-green-800">
-                <Crown className="w-5 h-5 mr-2" />
-                Funcionalidades Premium
+              <CardTitle className="flex items-center text-orange-800">
+                <Database className="w-5 h-5 mr-2" />
+                Backup de Orçamentos
                 <Crown className="w-4 h-4 ml-2 text-yellow-500" />
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-green-700 mb-4">
-                Acesso completo a todas as funcionalidades premium
+              <p className="text-sm text-orange-700 mb-4">
+                Salve e gerencie seus orçamentos
               </p>
               <Button 
-                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                className="w-full bg-orange-600 hover:bg-orange-700 text-white"
                 onClick={() => {
-                  // Implementar navegação para funcionalidades premium
-                  console.log('Acessar Premium');
+                  // Implementar navegação para backup de orçamentos
+                  console.log('Acessar Backup de Orçamentos');
                 }}
               >
-                Acessar Premium
+                Gerenciar Backups
               </Button>
             </CardContent>
           </Card>
