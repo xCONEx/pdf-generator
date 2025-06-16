@@ -1,9 +1,10 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BarChart3, TrendingUp, Users, DollarSign, FileText, Calendar } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, DollarSign, FileText, Calendar, Trash2 } from 'lucide-react';
 import { useBudgetAnalytics } from '@/hooks/useBudgetAnalytics';
+import { useSavedBudgets } from '@/hooks/useSavedBudgets';
 
 interface AnalyticsModalProps {
   open: boolean;
@@ -11,7 +12,8 @@ interface AnalyticsModalProps {
 }
 
 const AnalyticsModal = ({ open, onOpenChange }: AnalyticsModalProps) => {
-  const { analytics, loading } = useBudgetAnalytics();
+  const { analytics, loading, refetch } = useBudgetAnalytics();
+  const { deleteBudgets } = useSavedBudgets();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -28,6 +30,12 @@ const AnalyticsModal = ({ open, onOpenChange }: AnalyticsModalProps) => {
     const total = analytics.totalBudgets;
     const approved = analytics.statusDistribution.approved;
     return total > 0 ? Math.round((approved / total) * 100) : 0;
+  };
+
+  const handleDeleteBudget = async (budgetId: string) => {
+    await deleteBudgets([budgetId]);
+    // Recarregar dados após exclusão
+    refetch();
   };
 
   if (loading) {
@@ -173,6 +181,13 @@ const AnalyticsModal = ({ open, onOpenChange }: AnalyticsModalProps) => {
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(budget.status)}`}>
                           {budget.status}
                         </span>
+                        <Button 
+                          size="sm" 
+                          variant="destructive"
+                          onClick={() => handleDeleteBudget(budget.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
                   ))}
