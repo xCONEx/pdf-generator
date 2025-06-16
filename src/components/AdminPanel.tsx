@@ -210,15 +210,19 @@ const AdminPanel = () => {
                 <Plus size={14} />
                 <span>Adicionar Membro</span>
               </Button>
-              <Button
-                onClick={goToSalesPage}
-                variant="outline"
-                className="flex items-center justify-center space-x-2 text-xs sm:text-sm h-8 sm:h-9"
-                size="sm"
-              >
-                <ArrowRight size={14} />
-                <span>Página de Vendas</span>
-              </Button>
+<a
+  href="https://orcafacilpdf.vercel.app"
+  target="_blank"
+  rel="noopener noreferrer"
+>
+  <Button
+    className="flex items-center justify-center space-x-2 text-xs sm:text-sm h-8 sm:h-9"
+    size="sm"
+  >
+    <ArrowRight size={14} />
+    <span>Página de Vendas</span>
+  </Button>
+</a>
               <Button
                 onClick={goToPdfGenerator}
                 variant="secondary"
