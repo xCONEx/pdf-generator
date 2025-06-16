@@ -1,9 +1,25 @@
 
 import jsPDF from 'jspdf';
-import { BudgetData } from '@/types/budget';
+import { BudgetData, COLOR_THEMES } from '@/types/budget';
 
 export const generatePDF = async (budgetData: BudgetData) => {
   const pdf = new jsPDF();
+  
+  // Obter as cores do tema selecionado
+  const currentTheme = COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES];
+  
+  // Converter cores hex para RGB
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 59, g: 130, b: 246 }; // fallback para azul
+  };
+  
+  const primaryRgb = hexToRgb(currentTheme.primary);
+  const secondaryRgb = hexToRgb(currentTheme.secondary);
   
   // Configurações básicas
   const pageWidth = 210;
@@ -23,9 +39,9 @@ export const generatePDF = async (budgetData: BudgetData) => {
     return false;
   };
 
-  // Cabeçalho
+  // Cabeçalho com a cor do tema
   const addHeader = () => {
-    pdf.setFillColor(59, 130, 246); // Blue
+    pdf.setFillColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
     pdf.rect(0, 0, pageWidth, 25, 'F');
     
     pdf.setTextColor(255, 255, 255);
@@ -41,12 +57,13 @@ export const generatePDF = async (budgetData: BudgetData) => {
     pdf.text(`Nº: ${budgetNumber}`, pageWidth - margin - 40, 18);
   };
 
-  // Função para adicionar seção
+  // Função para adicionar seção com a cor do tema
   const addSection = (title: string, yPos: number) => {
+    // Usar cor accent mais clara para o fundo
     pdf.setFillColor(240, 248, 255);
     pdf.rect(margin, yPos - 5, contentWidth, 12, 'F');
     
-    pdf.setTextColor(59, 130, 246);
+    pdf.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
     pdf.setFontSize(14);
     pdf.setFont('helvetica', 'bold');
     pdf.text(title, margin + 2, yPos + 3);
@@ -84,9 +101,6 @@ export const generatePDF = async (budgetData: BudgetData) => {
   checkPageBreak(25);
   addSection('DADOS DO CLIENTE', yPosition);
   yPosition += 15;
-
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
 
   const clientData = [
     `Cliente: ${budgetData.clientInfo.name}`,
@@ -145,7 +159,7 @@ export const generatePDF = async (budgetData: BudgetData) => {
 
   yPosition += 10;
 
-  // Totais
+  // Totais com cor do tema
   checkPageBreak(40);
   
   pdf.setFillColor(248, 249, 250);
@@ -164,7 +178,7 @@ export const generatePDF = async (budgetData: BudgetData) => {
 
   const totalFinal = subtotal - (subtotal * budgetData.discount / 100);
   pdf.setFontSize(14);
-  pdf.setTextColor(59, 130, 246);
+  pdf.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
   pdf.text('TOTAL FINAL:', margin + 85, yPosition + 28);
   pdf.text(`R$ ${totalFinal.toFixed(2)}`, margin + 130, yPosition + 28);
   
