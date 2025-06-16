@@ -3,6 +3,9 @@ import { User } from '@supabase/supabase-js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BarChart3, Crown, FileText, Calendar, Database } from 'lucide-react';
+import { useState } from 'react';
+import AnalyticsModal from './AnalyticsModal';
+import BackupModal from './BackupModal';
 
 interface UserLicense {
   id: string;
@@ -20,6 +23,9 @@ interface UserDashboardProps {
 }
 
 const UserDashboard = ({ user, license }: UserDashboardProps) => {
+  const [analyticsModalOpen, setAnalyticsModalOpen] = useState(false);
+  const [backupModalOpen, setBackupModalOpen] = useState(false);
+
   const getPlanDisplayName = () => {
     switch (license.plan) {
       case 'premium':
@@ -115,10 +121,7 @@ const UserDashboard = ({ user, license }: UserDashboardProps) => {
               </p>
               <Button 
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                onClick={() => {
-                  // Implementar navegação para analytics
-                  console.log('Navegar para Analytics Dashboard');
-                }}
+                onClick={() => setAnalyticsModalOpen(true)}
               >
                 Ver Analytics
               </Button>
@@ -140,10 +143,7 @@ const UserDashboard = ({ user, license }: UserDashboardProps) => {
               </p>
               <Button 
                 className="w-full bg-orange-600 hover:bg-orange-700 text-white"
-                onClick={() => {
-                  // Implementar navegação para backup de orçamentos
-                  console.log('Acessar Backup de Orçamentos');
-                }}
+                onClick={() => setBackupModalOpen(true)}
               >
                 Gerenciar Backups
               </Button>
@@ -151,6 +151,16 @@ const UserDashboard = ({ user, license }: UserDashboardProps) => {
           </Card>
         </div>
       )}
+
+      {/* Modais */}
+      <AnalyticsModal 
+        open={analyticsModalOpen} 
+        onOpenChange={setAnalyticsModalOpen} 
+      />
+      <BackupModal 
+        open={backupModalOpen} 
+        onOpenChange={setBackupModalOpen} 
+      />
     </div>
   );
 };
