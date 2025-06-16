@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,10 +12,12 @@ import { toast } from '@/hooks/use-toast';
 import AdminNavButton from './AdminNavButton';
 import { useCompanyProfile } from '@/hooks/useCompanyProfile';
 import { useSavedClients } from '@/hooks/useSavedClients';
+import { useBudgetSaver } from '@/hooks/useBudgetSaver';
 
 const BudgetForm = () => {
   const { companyProfile, loading: loadingCompany, saveCompanyProfile } = useCompanyProfile();
   const { savedClients, loading: loadingClients, saveClient, deleteClient } = useSavedClients();
+  const { saveBudgetToDatabase } = useBudgetSaver();
   
   const [budgetData, setBudgetData] = useState<BudgetData>({
     companyInfo: {
@@ -132,10 +135,15 @@ const BudgetForm = () => {
 
   const handleGeneratePDF = async () => {
     try {
+      // Primeiro salvar no banco de dados
+      await saveBudgetToDatabase(budgetData);
+      
+      // Depois gerar o PDF
       await generatePDF(budgetData);
+      
       toast({
         title: "PDF Gerado com Sucesso!",
-        description: "Seu orçamento foi gerado e está sendo baixado.",
+        description: "Seu orçamento foi salvo e o PDF está sendo baixado.",
       });
     } catch (error) {
       toast({
