@@ -577,17 +577,23 @@ const BudgetForm = () => {
 
       {/* Modal de Clientes Salvos */}
       {showClientModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-hidden">
-            <SavedClientsSection onSelectClient={loadClient} />
-            <div className="p-4 border-t">
-              <Button onClick={() => setShowClientModal(false)} variant="outline" className="w-full">
-                Fechar
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col">
+      <div className="overflow-y-auto p-4 flex-1">
+        <SavedClientsSection onSelectClient={loadClient} />
+      </div>
+      <div className="p-4 border-t">
+        <Button
+          onClick={() => setShowClientModal(false)}
+          variant="outline"
+          className="w-full"
+        >
+          Fechar
+        </Button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 };
