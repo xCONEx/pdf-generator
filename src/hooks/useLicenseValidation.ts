@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -17,6 +16,18 @@ export const useLicenseValidation = () => {
   const [license, setLicense] = useState<UserLicense | null>(null);
   const [loading, setLoading] = useState(true);
   const [canGeneratePDF, setCanGeneratePDF] = useState(false);
+
+  const getPlanDisplayName = () => {
+    if (!license) return 'Básico';
+    switch (license.plan) {
+      case 'premium':
+        return 'Premium';
+      case 'enterprise':
+        return 'Enterprise';
+      default:
+        return 'Básico';
+    }
+  };
 
   const checkLicense = async () => {
     try {
@@ -155,5 +166,6 @@ export const useLicenseValidation = () => {
     canGeneratePDF,
     incrementPdfCount,
     refetch: checkLicense,
+    getPlanDisplayName,
   };
 };
