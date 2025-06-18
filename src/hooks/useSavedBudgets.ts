@@ -57,17 +57,24 @@ export const useSavedBudgets = () => {
 
   const deleteBudgets = async (budgetIds: string[]) => {
     try {
+      console.log('Deletando orçamentos com IDs:', budgetIds);
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
+      // Garantir que só deleta orçamentos do usuário atual e com os IDs específicos
       const { error } = await supabase
         .from('saved_budgets')
         .delete()
         .eq('user_id', user.id)
         .in('id', budgetIds);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao deletar orçamentos:', error);
+        throw error;
+      }
 
+      // Atualizar estado local removendo apenas os IDs deletados
       setSavedBudgets(prev => prev.filter(budget => !budgetIds.includes(budget.id)));
       
       toast({

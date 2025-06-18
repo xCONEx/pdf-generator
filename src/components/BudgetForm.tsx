@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -135,6 +134,8 @@ const BudgetForm = () => {
 
   const handleGeneratePDF = async () => {
     try {
+      console.log('Gerando PDF com dados:', budgetData);
+      
       // Primeiro salvar no banco de dados
       await saveBudgetToDatabase(budgetData);
       
@@ -146,6 +147,7 @@ const BudgetForm = () => {
         description: "Seu orçamento foi salvo e o PDF está sendo baixado.",
       });
     } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
       toast({
         title: "Erro ao Gerar PDF",
         description: "Ocorreu um erro ao gerar o PDF. Tente novamente.",
@@ -417,9 +419,10 @@ const BudgetForm = () => {
                         <Label className="text-xs">Qtd</Label>
                         <Input
                           type="number"
-                          min="1"
-                          value={item.quantity}
-                          onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 1)}
+                          min="0"
+                          value={item.quantity === 0 ? '' : item.quantity}
+                          onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
+                          placeholder="0"
                         />
                       </div>
                       <div>
@@ -472,7 +475,7 @@ const BudgetForm = () => {
               </CardContent>
             </Card>
 
-            {/* Observações */}
+            {/* Observações - Agora editáveis */}
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle style={{ color: currentTheme.primary }}>Condições e Observações</CardTitle>

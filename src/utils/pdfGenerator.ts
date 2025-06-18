@@ -3,6 +3,8 @@ import jsPDF from 'jspdf';
 import { BudgetData, COLOR_THEMES } from '@/types/budget';
 
 export const generatePDF = async (budgetData: BudgetData) => {
+  console.log('Iniciando geração de PDF com dados:', budgetData);
+  
   const pdf = new jsPDF();
   
   // Obter as cores do tema selecionado
@@ -19,7 +21,6 @@ export const generatePDF = async (budgetData: BudgetData) => {
   };
   
   const primaryRgb = hexToRgb(currentTheme.primary);
-  const secondaryRgb = hexToRgb(currentTheme.secondary);
   
   // Configurações básicas
   const pageWidth = 210;
@@ -59,7 +60,6 @@ export const generatePDF = async (budgetData: BudgetData) => {
 
   // Função para adicionar seção com a cor do tema
   const addSection = (title: string, yPos: number) => {
-    // Usar cor accent mais clara para o fundo
     pdf.setFillColor(240, 248, 255);
     pdf.rect(margin, yPos - 5, contentWidth, 12, 'F');
     
@@ -101,9 +101,6 @@ export const generatePDF = async (budgetData: BudgetData) => {
   checkPageBreak(25);
   addSection('DADOS DO CLIENTE', yPosition);
   yPosition += 15;
-  
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
   
   const clientData = [
     `Cliente: ${budgetData.clientInfo.name}`,
@@ -162,7 +159,7 @@ export const generatePDF = async (budgetData: BudgetData) => {
 
   yPosition += 10;
 
-  // Totais com cor do tema
+  // Totais
   checkPageBreak(40);
   
   pdf.setFillColor(248, 249, 250);
@@ -188,8 +185,8 @@ export const generatePDF = async (budgetData: BudgetData) => {
   pdf.setTextColor(0, 0, 0);
   yPosition += 45;
 
-  // Condições especiais
-  if (budgetData.specialConditions) {
+  // Condições especiais - usando os valores atuais do formulário
+  if (budgetData.specialConditions && budgetData.specialConditions.trim()) {
     checkPageBreak(30);
     addSection('CONDIÇÕES ESPECIAIS', yPosition);
     yPosition += 15;
@@ -201,8 +198,8 @@ export const generatePDF = async (budgetData: BudgetData) => {
     yPosition += conditionsLines.length * 5 + 15;
   }
 
-  // Observações
-  if (budgetData.observations) {
+  // Observações - usando os valores atuais do formulário
+  if (budgetData.observations && budgetData.observations.trim()) {
     checkPageBreak(30);
     addSection('OBSERVAÇÕES', yPosition);
     yPosition += 15;
@@ -223,5 +220,7 @@ export const generatePDF = async (budgetData: BudgetData) => {
 
   // Salvar o PDF
   const fileName = `Orcamento_${budgetData.clientInfo.name.replace(/\s+/g, '_')}_${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}.pdf`;
+  
+  console.log('PDF gerado com sucesso, salvando como:', fileName);
   pdf.save(fileName);
 };

@@ -41,11 +41,15 @@ const BackupModal = ({ open, onOpenChange }: BackupModalProps) => {
   const handleDeleteSelected = async () => {
     if (selectedBackups.length === 0) return;
     
+    console.log('Excluindo orçamentos selecionados:', selectedBackups);
+    // Garantir que só deleta os IDs especificamente selecionados
     await deleteBudgets(selectedBackups);
     setSelectedBackups([]);
   };
 
   const handleDeleteSingle = async (budgetId: string) => {
+    console.log('Excluindo orçamento individual:', budgetId);
+    // Garantir que só deleta o ID específico
     await deleteBudgets([budgetId]);
   };
 
@@ -156,7 +160,7 @@ const BackupModal = ({ open, onOpenChange }: BackupModalProps) => {
                     className="flex items-center"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
-                    Excluir Selecionados
+                    Excluir Selecionados ({selectedBackups.length})
                   </Button>
                 </div>
               </CardContent>
