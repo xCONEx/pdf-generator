@@ -101,6 +101,9 @@ export const generatePDF = async (budgetData: BudgetData) => {
   checkPageBreak(25);
   addSection('DADOS DO CLIENTE', yPosition);
   yPosition += 15;
+
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
   
   const clientData = [
     `Cliente: ${budgetData.clientInfo.name}`,
