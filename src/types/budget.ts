@@ -64,5 +64,11 @@ export const COLOR_THEMES = {
     secondary: '#DC2626',
     accent: '#FEE2E2',
     gradient: 'from-red-500 to-red-600'
+  },
+  black: {
+    primary: '#1F2937',
+    secondary: '#111827',
+    accent: '#F3F4F6',
+    gradient: 'from-gray-800 to-gray-900'
   }
 };
