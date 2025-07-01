@@ -58,31 +58,65 @@ export const useLicenseValidation = () => {
 
       if (!licenseData) {
         console.log('Nenhuma licença encontrada para:', user.email);
-        // Criar licença básica para usuários sem licença
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 7); // 7 dias de trial
+        
+        // Verificar se é admin
+        const isAdmin = user.email && ['adm.financeflow@gmail.com', 'yuriadrskt@gmail.com'].includes(user.email);
+        
+        if (isAdmin) {
+          // Criar licença enterprise para admin
+          const expiresAt = new Date();
+          expiresAt.setFullYear(expiresAt.getFullYear() + 10); // 10 anos
 
-        const { data: newLicense, error: createError } = await supabase
-          .from('user_licenses')
-          .insert({
-            email: user.email,
-            plan: 'basic',
-            status: 'active',
-            expires_at: expiresAt.toISOString(),
-            pdf_limit: 3,
-            pdfs_generated: 0
-          })
-          .select()
-          .single();
+          const { data: newLicense, error: createError } = await supabase
+            .from('user_licenses')
+            .insert({
+              email: user.email,
+              user_id: user.id,
+              plan: 'enterprise',
+              status: 'active',
+              expires_at: expiresAt.toISOString(),
+              pdf_limit: 999999,
+              pdfs_generated: 0
+            })
+            .select()
+            .single();
 
-        if (createError) {
-          console.error('Erro ao criar licença básica:', createError);
-          throw createError;
+          if (createError) {
+            console.error('Erro ao criar licença admin:', createError);
+            throw createError;
+          }
+
+          console.log('Licença enterprise criada para admin:', newLicense);
+          setLicense(newLicense);
+          setCanGeneratePDF(true);
+        } else {
+          // Criar licença básica para usuários normais
+          const expiresAt = new Date();
+          expiresAt.setDate(expiresAt.getDate() + 7); // 7 dias de trial
+
+          const { data: newLicense, error: createError } = await supabase
+            .from('user_licenses')
+            .insert({
+              email: user.email,
+              user_id: user.id,
+              plan: 'basic',
+              status: 'active',
+              expires_at: expiresAt.toISOString(),
+              pdf_limit: 3,
+              pdfs_generated: 0
+            })
+            .select()
+            .single();
+
+          if (createError) {
+            console.error('Erro ao criar licença básica:', createError);
+            throw createError;
+          }
+
+          console.log('Licença básica criada:', newLicense);
+          setLicense(newLicense);
+          setCanGeneratePDF(true);
         }
-
-        console.log('Licença básica criada:', newLicense);
-        setLicense(newLicense);
-        setCanGeneratePDF(true);
       } else {
         setLicense(licenseData);
         

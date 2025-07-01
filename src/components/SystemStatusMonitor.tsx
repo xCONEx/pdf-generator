@@ -69,8 +69,25 @@ const SystemStatusMonitor = () => {
 
       // Testar webhook (simulado)
       try {
-        const response = await fetch('/api/webhook-test', { method: 'POST' });
-        if (response.ok) {
+        // Testar se a Edge Function está acessível
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://linxpynrwpqokugizynm.supabase.co';
+        const response = await fetch(`${supabaseUrl}/functions/v1/cakto-webhook`, { 
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer 08f50a3f-44c8-444d-98ad-3e8cd2e94957'
+          },
+          body: JSON.stringify({
+            email: 'test@example.com',
+            product_name: 'Test Product',
+            status: 'test'
+          })
+        });
+        
+        if (response.status === 401 || response.status === 403) {
+          // Webhook está online mas rejeitou o teste (esperado)
+          newStatus.webhook = 'online';
+        } else if (response.ok) {
           newStatus.webhook = 'online';
         } else {
           newStatus.webhook = 'offline';
