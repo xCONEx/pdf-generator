@@ -84,16 +84,23 @@ const SystemStatusMonitor = () => {
           })
         });
         
+        // 401/403 são esperados pois estamos enviando dados de teste inválidos
+        // mas o webhook está respondendo, então está online
         if (response.status === 401 || response.status === 403) {
-          // Webhook está online mas rejeitou o teste (esperado)
+          console.log('Webhook online - rejeitou dados de teste (esperado)');
           newStatus.webhook = 'online';
         } else if (response.ok) {
+          console.log('Webhook online - aceitou dados de teste');
           newStatus.webhook = 'online';
-        } else {
+        } else if (response.status >= 500) {
+          console.error('Webhook offline - erro do servidor:', response.status);
           newStatus.webhook = 'offline';
+        } else {
+          console.log('Webhook online - status:', response.status);
+          newStatus.webhook = 'online';
         }
       } catch (webhookError) {
-        console.error('Erro no webhook:', webhookError);
+        console.error('Erro ao testar webhook:', webhookError);
         newStatus.webhook = 'offline';
       }
 
