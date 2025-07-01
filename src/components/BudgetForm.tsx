@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +14,135 @@ import { useSavedClients } from '@/hooks/useSavedClients';
 import { useBudgetSaver } from '@/hooks/useBudgetSaver';
 import { useLicenseValidation } from '@/hooks/useLicenseValidation';
 import SavedClientsSection from './SavedClientsSection';
+
+// Funções de formatação de moeda
+const formatCurrency = (value: number): string => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
+
+const parseCurrency = (value: string): number => {
+  // Remove R$, espaços e converte vírgula para ponto
+  const cleanValue = value
+    .replace(/R\$\s*/g, '')
+    .replace(/\s/g, '')
+    .replace(/\./g, '')
+    .replace(',', '.');
+  
+  const parsed = parseFloat(cleanValue);
+  return isNaN(parsed) ? 0 : parsed;
+};
+
+const formatCurrencyInput = (value: number): string => {
+  if (value === 0) return 'R$ 0,00';
+  
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
+
+const handleCurrencyInputChange = (value: string, callback: (value: number) => void) => {
+  // Remove R$, espaços e pontos, mantém apenas vírgula
+  const cleanValue = value
+    .replace(/R\$\s*/g, '')
+    .replace(/\s/g, '')
+    .replace(/\./g, '')
+    .replace(',', '.');
+  
+  const parsed = parseFloat(cleanValue);
+  const finalValue = isNaN(parsed) ? 0 : parsed;
+  
+  callback(finalValue);
+};
+
+// Componente para input de moeda
+const CurrencyInput = ({ 
+  value, 
+  onChange, 
+  placeholder = "R$ 0,00",
+  className = ""
+}: {
+  value: number;
+  onChange: (value: number) => void;
+  placeholder?: string;
+  className?: string;
+}) => {
+  const [displayValue, setDisplayValue] = useState(formatCurrencyInput(value));
+
+  useEffect(() => {
+    setDisplayValue(formatCurrencyInput(value));
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    
+    // Se o campo está vazio, permite digitar
+    if (inputValue === '' || inputValue === 'R$ ') {
+      setDisplayValue(inputValue);
+      onChange(0);
+      return;
+    }
+
+    // Remove caracteres não numéricos exceto vírgula
+    const cleanValue = inputValue.replace(/[^\d,]/g, '');
+    
+    if (cleanValue === '') {
+      setDisplayValue('R$ 0,00');
+      onChange(0);
+      return;
+    }
+
+    // Se não tem vírgula, adiciona duas casas decimais
+    if (!cleanValue.includes(',')) {
+      const number = parseInt(cleanValue) || 0;
+      const formatted = `R$ ${number.toLocaleString('pt-BR')},00`;
+      setDisplayValue(formatted);
+      onChange(number);
+      return;
+    }
+
+    // Se tem vírgula, formata corretamente
+    const parts = cleanValue.split(',');
+    const integerPart = parts[0] || '0';
+    const decimalPart = parts[1] || '00';
+    
+    // Limita casas decimais a 2
+    const formattedDecimal = decimalPart.slice(0, 2).padEnd(2, '0');
+    
+    // Formata parte inteira com pontos
+    const formattedInteger = parseInt(integerPart).toLocaleString('pt-BR');
+    
+    const formatted = `R$ ${formattedInteger},${formattedDecimal}`;
+    setDisplayValue(formatted);
+    
+    // Converte para número
+    const numericValue = parseFloat(`${integerPart}.${formattedDecimal}`);
+    onChange(numericValue);
+  };
+
+  const handleBlur = () => {
+    // Garante formatação correta ao sair do campo
+    setDisplayValue(formatCurrencyInput(value));
+  };
+
+  return (
+    <Input
+      type="text"
+      value={displayValue}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      placeholder={placeholder}
+      className={className}
+    />
+  );
+};
 
 const BudgetForm = () => {
   const { companyProfile, loading: loadingCompany, saveCompanyProfile } = useCompanyProfile();
@@ -460,13 +588,10 @@ const BudgetForm = () => {
                       </div>
                       <div>
                         <Label className="text-xs">Preço Unit.</Label>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={item.unitPrice === 0 ? '' : item.unitPrice}
-                          onChange={(e) => updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
-                          placeholder="0,00"
+                        <CurrencyInput
+                          value={item.unitPrice}
+                          onChange={(value) => updateItem(item.id, 'unitPrice', value)}
+                          placeholder="R$ 0,00"
                           className="text-sm"
                         />
                       </div>
