@@ -169,12 +169,17 @@ export const useLicenseValidation = () => {
   const incrementPdfCount = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !license) return;
+      if (!user || !license) {
+        console.error('Usuário ou licença não encontrados');
+        return;
+      }
 
       console.log('Incrementando contador de PDFs para usuário:', user.email);
+      console.log('Licença atual:', license);
 
-      const { error } = await supabase.rpc('increment_pdf_count', { 
-        user_id: license.id 
+      // Usar o user_id correto (não o license.id)
+      const { data: newCount, error } = await supabase.rpc('increment_pdf_count', { 
+        user_id: user.id 
       });
 
       if (error) {
@@ -182,14 +187,27 @@ export const useLicenseValidation = () => {
         throw error;
       }
 
-      // Atualizar estado local
-      setLicense(prev => prev ? {
-        ...prev,
-        pdfs_generated: prev.pdfs_generated + 1
-      } : null);
+      console.log('Novo contador retornado pela função:', newCount);
+
+      // Buscar a licença atualizada do banco para garantir sincronização
+      const { data: updatedLicense, error: fetchError } = await supabase
+        .from('user_licenses')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (fetchError) {
+        console.error('Erro ao buscar licença atualizada:', fetchError);
+        throw fetchError;
+      }
+
+      console.log('Licença atualizada:', updatedLicense);
+
+      // Atualizar estado local com dados reais do banco
+      setLicense(updatedLicense);
 
       // Verificar se ainda pode gerar PDFs
-      if (license.pdfs_generated + 1 >= license.pdf_limit) {
+      if (updatedLicense.pdfs_generated >= updatedLicense.pdf_limit) {
         setCanGeneratePDF(false);
         toast({
           title: 'Limite Atingido',
@@ -198,7 +216,9 @@ export const useLicenseValidation = () => {
         });
       }
 
-      console.log('Contador incrementado. Novo total:', license.pdfs_generated + 1);
+      console.log('Contador incrementado. Novo total:', updatedLicense.pdfs_generated);
+      
+      return updatedLicense.pdfs_generated;
     } catch (error) {
       console.error('Erro ao incrementar contador de PDFs:', error);
       toast({
@@ -206,6 +226,7 @@ export const useLicenseValidation = () => {
         description: 'Erro ao atualizar contador de PDFs.',
         variant: 'destructive',
       });
+      throw error;
     }
   };
 

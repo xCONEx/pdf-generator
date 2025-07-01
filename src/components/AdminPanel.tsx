@@ -1,9 +1,8 @@
-
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowRight, Plus, FileText, Edit } from 'lucide-react';
+import { ArrowRight, Plus, FileText, Edit, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AddMemberForm from './AddMemberForm';
 import EditPlanForm from './EditPlanForm';
@@ -172,6 +171,28 @@ const AdminPanel = () => {
     }
   };
 
+  const fixPdfCounters = async () => {
+    try {
+      const { data: fixedCount, error } = await supabase.rpc('fix_pdf_counters');
+      
+      if (error) throw error;
+
+      toast({
+        title: 'Contadores Corrigidos',
+        description: `${fixedCount} contadores foram corrigidos com sucesso.`,
+      });
+
+      loadAdminData();
+    } catch (error) {
+      console.error('Erro ao corrigir contadores:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao corrigir contadores de PDFs',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const goToPdfGenerator = () => {
     // Recarregar a página para voltar ao gerador
     window.location.href = '/';
@@ -206,10 +227,16 @@ const AdminPanel = () => {
               <Button
                 onClick={() => setShowAddMember(true)}
                 className="flex items-center justify-center space-x-2 text-xs sm:text-sm h-8 sm:h-9"
-                size="sm"
               >
                 <Plus size={14} />
                 <span>Adicionar Membro</span>
+              </Button>
+              <Button
+                onClick={fixPdfCounters}
+                className="flex items-center justify-center space-x-2 text-xs sm:text-sm h-8 sm:h-9 bg-orange-600 hover:bg-orange-700 text-white"
+              >
+                <RefreshCw size={14} />
+                <span>Corrigir Contadores</span>
               </Button>
 <a
   href="https://orcafacilpdf.vercel.app"

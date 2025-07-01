@@ -244,9 +244,13 @@ export type Database = {
     Functions: {
       increment_pdf_count: {
         Args: { user_id: string }
-        Returns: undefined
+        Returns: number
       }
       check_expired_licenses: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      fix_pdf_counters: {
         Args: Record<PropertyKey, never>
         Returns: number
       }
