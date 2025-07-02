@@ -1,4 +1,4 @@
-import { addFont } from 'jspdf-font';
+//import { addFont } from 'jspdf-font';
 
 const font = {
   name: 'NotoSans-Regular',
