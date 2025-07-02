@@ -1,8 +1,9 @@
 // @ts-ignore
 import { jsPDF } from 'jspdf';
 import { BudgetData, COLOR_THEMES } from '@/types/budget';
-import NotoSans from '../fonts/NotoSans-Regular.ttf';
- 
+import '../fonts/NotoSans-Regular.js';
+import '../fonts/NotoSans-Bold.js'; // Se gerou o bold
+
 export const generatePDF = async (budgetData: BudgetData) => {
   console.log('Iniciando geração de PDF com dados:', budgetData);
   
