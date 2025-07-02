@@ -637,7 +637,7 @@ const BudgetForm = () => {
                   <Textarea
                     value={budgetData.specialConditions}
                     onChange={(e) => setBudgetData(prev => ({ ...prev, specialConditions: e.target.value }))}
-                    rows={3}
+                    rows={10}
                     placeholder="Condições de pagamento, prazo de entrega, etc."
                     className="text-sm"
                   />
@@ -648,7 +648,7 @@ const BudgetForm = () => {
                   <Textarea
                     value={budgetData.observations}
                     onChange={(e) => setBudgetData(prev => ({ ...prev, observations: e.target.value }))}
-                    rows={3}
+                    rows={10}
                     placeholder="Informações extras, garantias, etc."
                     className="text-sm"
                   />
