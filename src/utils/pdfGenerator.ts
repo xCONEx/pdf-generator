@@ -1,10 +1,19 @@
-import jsPDF from 'jspdf';
+// @ts-ignore
+import { jsPDF } from 'jspdf';
 import { BudgetData, COLOR_THEMES } from '@/types/budget';
+import NotoSans from '../fonts/NotoSans-Regular.ttf';
 
 export const generatePDF = async (budgetData: BudgetData) => {
   console.log('Iniciando geração de PDF com dados:', budgetData);
   
   const pdf = new jsPDF();
+  
+  // Registrar fonte NotoSans
+  if (!(pdf as any).getFontList()['NotoSans']) {
+    pdf.addFileToVFS('NotoSans-Regular.ttf', NotoSans);
+    pdf.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
+  }
+  pdf.setFont('NotoSans', 'normal');
   
   // Obter as cores do tema selecionado
   const currentTheme = COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES];
@@ -28,7 +37,8 @@ export const generatePDF = async (budgetData: BudgetData) => {
   const contentWidth = pageWidth - 2 * margin;
   let yPosition = 30;
 
-const addLogo = async () => {
+  // Função para carregar e adicionar logo
+  const addLogo = async () => {
   const maxWidth = 30;
   const maxHeight = 15;
   const logoY = 5;
@@ -76,9 +86,6 @@ const addLogo = async () => {
   }
 };
 
-
-
-
   // Função para verificar quebra de página
   const checkPageBreak = async (spaceNeeded: number) => {
     if (yPosition + spaceNeeded > pageHeight - 20) {
@@ -90,22 +97,22 @@ const addLogo = async () => {
     return false;
   };
 
-  // Cabeçalho com a cor do tema e logo
+    // Cabeçalho com a cor do tema e logo
   const addHeader = async () => {
   pdf.setFillColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
   pdf.rect(0, 0, pageWidth, 25, 'F');
 
-  await addLogo(); // adiciona logo no canto direito
+  const logoTextX = await addLogo();
 
   pdf.setTextColor(255, 255, 255);
   pdf.setFontSize(20);
-  pdf.setFont('helvetica', 'bold');
-
+  pdf.setFontSize(20);
+  pdf.setFont('NotoSans', 'bold');
   // título fixo no canto esquerdo
   pdf.text('ORÇAMENTO', margin, 18);
 };
 
-
+  
   // Função para adicionar seção com a cor do tema
   const addSection = (title: string, yPos: number) => {
     pdf.setFillColor(240, 248, 255);
@@ -113,10 +120,11 @@ const addLogo = async () => {
     
     pdf.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
     pdf.setFontSize(14);
-    pdf.setFont('helvetica', 'bold');
+    pdf.setFont('NotoSans', 'bold');
     pdf.text(title, margin + 2, yPos + 3);
     
     pdf.setTextColor(0, 0, 0);
+    pdf.setFont('NotoSans', 'normal');
   };
 
   // Inicializar primeira página
@@ -129,7 +137,7 @@ const addLogo = async () => {
   yPosition += 15;
 
   pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
+  pdf.setFont('NotoSans', 'normal');
   
   const companyData = [
     `Empresa: ${budgetData.companyInfo.name}`,
@@ -151,7 +159,7 @@ const addLogo = async () => {
   yPosition += 15;
 
   pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
+  pdf.setFont('NotoSans', 'normal');
   
   const clientData = [
     `Cliente: ${budgetData.clientInfo.name}`,
@@ -178,7 +186,7 @@ const addLogo = async () => {
   
   pdf.setTextColor(0, 0, 0);
   pdf.setFontSize(9);
-  pdf.setFont('helvetica', 'bold');
+  pdf.setFont('NotoSans', 'bold');
   
   pdf.text('DESCRIÇÃO', margin + 2, yPosition);
   pdf.text('QTD', margin + 90, yPosition);
@@ -187,7 +195,7 @@ const addLogo = async () => {
   yPosition += 8;
 
   // Itens
-  pdf.setFont('helvetica', 'normal');
+  pdf.setFont('NotoSans', 'normal');
   let subtotal = 0;
   
   for (let index = 0; index < budgetData.items.length; index++) {
@@ -218,7 +226,7 @@ const addLogo = async () => {
   pdf.rect(margin + 80, yPosition, contentWidth - 80, 35, 'F');
   
   pdf.setFontSize(11);
-  pdf.setFont('helvetica', 'bold');
+  pdf.setFont('NotoSans', 'bold');
   
   pdf.text('Subtotal:', margin + 85, yPosition + 8);
   pdf.text(`R$ ${subtotal.toFixed(2)}`, margin + 130, yPosition + 8);
@@ -244,7 +252,7 @@ const addLogo = async () => {
     yPosition += 15;
 
     pdf.setFontSize(10);
-    pdf.setFont('helvetica', 'normal');
+    pdf.setFont('NotoSans', 'normal');
     const conditionsLines = pdf.splitTextToSize(budgetData.specialConditions, contentWidth - 4);
     pdf.text(conditionsLines, margin + 2, yPosition);
     yPosition += conditionsLines.length * 5 + 15;
@@ -257,7 +265,7 @@ const addLogo = async () => {
     yPosition += 15;
 
     pdf.setFontSize(10);
-    pdf.setFont('helvetica', 'normal');
+    pdf.setFont('NotoSans', 'normal');
     const observationsLines = pdf.splitTextToSize(budgetData.observations, contentWidth - 4);
     pdf.text(observationsLines, margin + 2, yPosition);
     yPosition += observationsLines.length * 5 + 20;
