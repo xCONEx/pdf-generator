@@ -30,33 +30,31 @@ export const generatePDF = async (budgetData: BudgetData) => {
 
   // Função para carregar e adicionar logo
   const addLogo = async () => {
+    const logoWidth = 30;
+    const logoHeight = 15;
     if (budgetData.companyInfo.logoUrl) {
       try {
-        // Se a logo é uma URL de dados (base64)
         if (budgetData.companyInfo.logoUrl.startsWith('data:')) {
-          pdf.addImage(budgetData.companyInfo.logoUrl, 'JPEG', margin, 5, 30, 15);
-          return 35; // Retorna a posição X após a logo
+          pdf.addImage(budgetData.companyInfo.logoUrl, 'JPEG', margin, 5, logoWidth, logoHeight);
+          return margin + logoWidth + 10; // Espaço após a logo
         }
-        
-        // Se é uma URL externa, tentar carregar
         const response = await fetch(budgetData.companyInfo.logoUrl);
         const blob = await response.blob();
         const reader = new FileReader();
-        
         return new Promise((resolve) => {
           reader.onload = () => {
             const base64 = reader.result as string;
-            pdf.addImage(base64, 'JPEG', margin, 5, 30, 15);
-            resolve(35); // Retorna a posição X após a logo
+            pdf.addImage(base64, 'JPEG', margin, 5, logoWidth, logoHeight);
+            resolve(margin + logoWidth + 10);
           };
           reader.readAsDataURL(blob);
         });
       } catch (error) {
         console.error('Erro ao carregar logo:', error);
-        return margin; // Retorna margem padrão se falhar
+        return margin;
       }
     }
-    return margin; // Retorna margem padrão se não houver logo
+    return margin;
   };
 
   // Função para verificar quebra de página
@@ -74,14 +72,11 @@ export const generatePDF = async (budgetData: BudgetData) => {
   const addHeader = async () => {
     pdf.setFillColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
     pdf.rect(0, 0, pageWidth, 25, 'F');
-    
-    // Adicionar logo se disponível
-    const logoX = await addLogo();
-    
+    const logoTextX = await addLogo();
     pdf.setTextColor(255, 255, 255);
     pdf.setFontSize(20);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('ORÇAMENTO', logoX, 18);
+    pdf.text('ORÇAMENTO', logoTextX, 18);
   };
 
   // Função para adicionar seção com a cor do tema
