@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { BudgetData, COLOR_THEMES } from '@/types/budget';
 
@@ -29,33 +28,60 @@ export const generatePDF = async (budgetData: BudgetData) => {
   const contentWidth = pageWidth - 2 * margin;
   let yPosition = 30;
 
+  // Função para carregar e adicionar logo
+  const addLogo = async () => {
+    if (budgetData.companyInfo.logoUrl) {
+      try {
+        // Se a logo é uma URL de dados (base64)
+        if (budgetData.companyInfo.logoUrl.startsWith('data:')) {
+          pdf.addImage(budgetData.companyInfo.logoUrl, 'JPEG', margin, 5, 30, 15);
+          return 35; // Retorna a posição X após a logo
+        }
+        
+        // Se é uma URL externa, tentar carregar
+        const response = await fetch(budgetData.companyInfo.logoUrl);
+        const blob = await response.blob();
+        const reader = new FileReader();
+        
+        return new Promise((resolve) => {
+          reader.onload = () => {
+            const base64 = reader.result as string;
+            pdf.addImage(base64, 'JPEG', margin, 5, 30, 15);
+            resolve(35); // Retorna a posição X após a logo
+          };
+          reader.readAsDataURL(blob);
+        });
+      } catch (error) {
+        console.error('Erro ao carregar logo:', error);
+        return margin; // Retorna margem padrão se falhar
+      }
+    }
+    return margin; // Retorna margem padrão se não houver logo
+  };
+
   // Função para verificar quebra de página
-  const checkPageBreak = (spaceNeeded: number) => {
+  const checkPageBreak = async (spaceNeeded: number) => {
     if (yPosition + spaceNeeded > pageHeight - 20) {
       pdf.addPage();
       yPosition = 30;
-      addHeader();
+      await addHeader();
       return true;
     }
     return false;
   };
 
-  // Cabeçalho com a cor do tema
-  const addHeader = () => {
+  // Cabeçalho com a cor do tema e logo
+  const addHeader = async () => {
     pdf.setFillColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
     pdf.rect(0, 0, pageWidth, 25, 'F');
+    
+    // Adicionar logo se disponível
+    const logoX = await addLogo();
     
     pdf.setTextColor(255, 255, 255);
     pdf.setFontSize(20);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('ORÇAMENTO', margin, 18);
-    
-    pdf.setFontSize(10);
-    pdf.setFont('helvetica', 'normal');
-    const currentDate = new Date().toLocaleDateString('pt-BR');
-    const budgetNumber = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-    pdf.text(`Data: ${currentDate}`, pageWidth - margin - 40, 12);
-    pdf.text(`Nº: ${budgetNumber}`, pageWidth - margin - 40, 18);
+    pdf.text('ORÇAMENTO', logoX, 18);
   };
 
   // Função para adicionar seção com a cor do tema
@@ -72,11 +98,11 @@ export const generatePDF = async (budgetData: BudgetData) => {
   };
 
   // Inicializar primeira página
-  addHeader();
+  await addHeader();
   yPosition = 40;
 
   // Dados da empresa
-  checkPageBreak(25);
+  await checkPageBreak(25);
   addSection('DADOS DA EMPRESA', yPosition);
   yPosition += 15;
 
@@ -90,15 +116,15 @@ export const generatePDF = async (budgetData: BudgetData) => {
     `Endereço: ${budgetData.companyInfo.address}`
   ];
 
-  companyData.forEach(line => {
-    checkPageBreak(6);
+  for (const line of companyData) {
+    await checkPageBreak(6);
     pdf.text(line, margin + 2, yPosition);
     yPosition += 5;
-  });
+  }
   yPosition += 10;
 
   // Dados do cliente
-  checkPageBreak(25);
+  await checkPageBreak(25);
   addSection('DADOS DO CLIENTE', yPosition);
   yPosition += 15;
 
@@ -112,15 +138,15 @@ export const generatePDF = async (budgetData: BudgetData) => {
     `Endereço: ${budgetData.clientInfo.address}`
   ];
 
-  clientData.forEach(line => {
-    checkPageBreak(6);
+  for (const line of clientData) {
+    await checkPageBreak(6);
     pdf.text(line, margin + 2, yPosition);
     yPosition += 5;
-  });
+  }
   yPosition += 15;
 
   // Itens
-  checkPageBreak(30);
+  await checkPageBreak(30);
   addSection('ITENS DO ORÇAMENTO', yPosition);
   yPosition += 15;
 
@@ -142,8 +168,9 @@ export const generatePDF = async (budgetData: BudgetData) => {
   pdf.setFont('helvetica', 'normal');
   let subtotal = 0;
   
-  budgetData.items.forEach((item, index) => {
-    checkPageBreak(12);
+  for (let index = 0; index < budgetData.items.length; index++) {
+    const item = budgetData.items[index];
+    await checkPageBreak(12);
     
     if (index % 2 === 0) {
       pdf.setFillColor(250, 250, 250);
@@ -158,12 +185,12 @@ export const generatePDF = async (budgetData: BudgetData) => {
     
     subtotal += item.total;
     yPosition += 8;
-  });
+  }
 
   yPosition += 10;
 
   // Totais
-  checkPageBreak(40);
+  await checkPageBreak(40);
   
   pdf.setFillColor(248, 249, 250);
   pdf.rect(margin + 80, yPosition, contentWidth - 80, 35, 'F');
@@ -190,7 +217,7 @@ export const generatePDF = async (budgetData: BudgetData) => {
 
   // Condições especiais - usando os valores atuais do formulário
   if (budgetData.specialConditions && budgetData.specialConditions.trim()) {
-    checkPageBreak(30);
+    await checkPageBreak(30);
     addSection('CONDIÇÕES ESPECIAIS', yPosition);
     yPosition += 15;
 
@@ -203,7 +230,7 @@ export const generatePDF = async (budgetData: BudgetData) => {
 
   // Observações - usando os valores atuais do formulário
   if (budgetData.observations && budgetData.observations.trim()) {
-    checkPageBreak(30);
+    await checkPageBreak(30);
     addSection('OBSERVAÇÕES', yPosition);
     yPosition += 15;
 
