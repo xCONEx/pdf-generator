@@ -28,42 +28,34 @@ export const generatePDF = async (budgetData: BudgetData) => {
   const contentWidth = pageWidth - 2 * margin;
   let yPosition = 30;
 
-  // Função para carregar e adicionar logo
-  // Função para carregar e adicionar logo do lado direito
 const addLogo = async () => {
   const maxWidth = 30;
   const maxHeight = 15;
-  const logoX = pageWidth - margin - maxWidth;
   const logoY = 5;
 
-  const drawLogo = (base64: string) => {
-    const img = new Image();
-    img.src = base64;
-    img.onload = () => {
-      const { width, height } = img;
-
-      // Calcula proporção sem ultrapassar maxWidth/maxHeight
-      let drawWidth = width;
-      let drawHeight = height;
+  const insertLogo = async (base64: string) => {
+    try {
+      const { width, height } = pdf.getImageProperties(base64);
 
       const widthRatio = maxWidth / width;
       const heightRatio = maxHeight / height;
-      const ratio = Math.min(widthRatio, heightRatio, 1); // evita aumentar o tamanho
+      const ratio = Math.min(widthRatio, heightRatio, 1); // mantém proporção, sem ultrapassar o máximo
 
-      drawWidth = width * ratio;
-      drawHeight = height * ratio;
+      const finalWidth = width * ratio;
+      const finalHeight = height * ratio;
 
-      // ajusta X para alinhar à direita respeitando nova largura
-      const adjustedX = pageWidth - margin - drawWidth;
+      const logoX = pageWidth - margin - finalWidth;
 
-      pdf.addImage(base64, 'JPEG', adjustedX, logoY, drawWidth, drawHeight);
-    };
+      pdf.addImage(base64, 'JPEG', logoX, logoY, finalWidth, finalHeight);
+    } catch (err) {
+      console.error('Erro ao inserir imagem:', err);
+    }
   };
 
-  try {
-    if (budgetData.companyInfo.logoUrl) {
+  if (budgetData.companyInfo.logoUrl) {
+    try {
       if (budgetData.companyInfo.logoUrl.startsWith('data:')) {
-        drawLogo(budgetData.companyInfo.logoUrl);
+        await insertLogo(budgetData.companyInfo.logoUrl);
         return;
       }
 
@@ -71,18 +63,19 @@ const addLogo = async () => {
       const blob = await response.blob();
       const reader = new FileReader();
       return new Promise<void>((resolve) => {
-        reader.onload = () => {
+        reader.onload = async () => {
           const base64 = reader.result as string;
-          drawLogo(base64);
+          await insertLogo(base64);
           resolve();
         };
         reader.readAsDataURL(blob);
       });
+    } catch (error) {
+      console.error('Erro ao carregar logo:', error);
     }
-  } catch (error) {
-    console.error('Erro ao carregar logo:', error);
   }
 };
+
 
 
 
