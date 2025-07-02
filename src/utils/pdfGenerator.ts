@@ -31,33 +31,59 @@ export const generatePDF = async (budgetData: BudgetData) => {
   // Função para carregar e adicionar logo
   // Função para carregar e adicionar logo do lado direito
 const addLogo = async () => {
-  const logoWidth = 30;
-  const logoHeight = 15;
-  const logoX = pageWidth - margin - logoWidth; // posiciona no canto direito
+  const maxWidth = 30;
+  const maxHeight = 15;
+  const logoX = pageWidth - margin - maxWidth;
   const logoY = 5;
 
-  if (budgetData.companyInfo.logoUrl) {
-    try {
+  const drawLogo = (base64: string) => {
+    const img = new Image();
+    img.src = base64;
+    img.onload = () => {
+      const { width, height } = img;
+
+      // Calcula proporção sem ultrapassar maxWidth/maxHeight
+      let drawWidth = width;
+      let drawHeight = height;
+
+      const widthRatio = maxWidth / width;
+      const heightRatio = maxHeight / height;
+      const ratio = Math.min(widthRatio, heightRatio, 1); // evita aumentar o tamanho
+
+      drawWidth = width * ratio;
+      drawHeight = height * ratio;
+
+      // ajusta X para alinhar à direita respeitando nova largura
+      const adjustedX = pageWidth - margin - drawWidth;
+
+      pdf.addImage(base64, 'JPEG', adjustedX, logoY, drawWidth, drawHeight);
+    };
+  };
+
+  try {
+    if (budgetData.companyInfo.logoUrl) {
       if (budgetData.companyInfo.logoUrl.startsWith('data:')) {
-        pdf.addImage(budgetData.companyInfo.logoUrl, 'JPEG', logoX, logoY, logoWidth, logoHeight);
+        drawLogo(budgetData.companyInfo.logoUrl);
         return;
       }
+
       const response = await fetch(budgetData.companyInfo.logoUrl);
       const blob = await response.blob();
       const reader = new FileReader();
       return new Promise<void>((resolve) => {
         reader.onload = () => {
           const base64 = reader.result as string;
-          pdf.addImage(base64, 'JPEG', logoX, logoY, logoWidth, logoHeight);
+          drawLogo(base64);
           resolve();
         };
         reader.readAsDataURL(blob);
       });
-    } catch (error) {
-      console.error('Erro ao carregar logo:', error);
     }
+  } catch (error) {
+    console.error('Erro ao carregar logo:', error);
   }
 };
+
 
 
   // Função para verificar quebra de página
