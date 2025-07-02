@@ -29,8 +29,14 @@ const LoginForm = () => {
         if (error) throw error;
         toast({ title: 'Conta criada!', description: 'Verifique seu email para ativar a conta.' });
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        if (!rememberMe && data.session) {
+          const projectRef = 'linxpynrwpqokugizynm';
+          const key = `sb-${projectRef}-auth-token`;
+          localStorage.removeItem(key);
+          sessionStorage.setItem(key, JSON.stringify(data.session));
+        }
         toast({ title: 'Login realizado!', description: 'Bem-vindo ao Gerador de Orçamentos.' });
       }
     } catch (error: any) {
