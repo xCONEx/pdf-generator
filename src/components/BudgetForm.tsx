@@ -136,7 +136,7 @@ const BudgetForm = () => {
   const { companyProfile, loading: loadingCompany, saveCompanyProfile } = useCompanyProfile();
   const { savedClients, loading: loadingClients, saveClient, deleteClient } = useSavedClients();
   const { saveBudgetToDatabase } = useBudgetSaver();
-  const { license, canGeneratePDF, incrementPdfCount } = useLicenseValidation();
+  const { license, canGeneratePDF, incrementPdfCount, refetch } = useLicenseValidation();
   
   const [budgetData, setBudgetData] = useState<BudgetData>({
     companyInfo: {
@@ -277,6 +277,8 @@ const BudgetForm = () => {
       // Depois gerar o PDF
       await generatePDF(budgetData);
       
+      // Atualizar contador de PDFs gerados
+      await refetch();
       toast({
         title: "PDF Gerado com Sucesso!",
         description: "Seu orçamento foi salvo e o PDF está sendo baixado.",
