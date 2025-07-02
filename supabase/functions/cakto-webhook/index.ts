@@ -1,14 +1,18 @@
-
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+// Garantir que as variáveis de ambiente estejam disponíveis
+if (typeof Deno !== 'undefined' && Deno.env) {
+  // Deno.env já está disponível
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const CAKTO_WEBHOOK_KEY = '08f50a3f-44c8-444d-98ad-3e8cd2e94957';
-const ADMIN_EMAIL = 'adm.financeflow@gmail.com';
+const CAKTO_WEBHOOK_KEY = Deno.env.get('CAKTO_WEBHOOK_KEY') ?? '';
+const ADMIN_EMAILS = ['adm.financeflow@gmail.com', 'yuriadrskt@gmail.com'];
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -32,8 +36,23 @@ serve(async (req) => {
     const isValid = await validateCaktoWebhook(webhookData, req.headers);
     
     if (!isValid) {
-      console.error('Webhook inválido da Cakto');
+      console.warn('Webhook inválido da Cakto');
       return new Response('Invalid webhook', { status: 401 });
+    }
+
+    // Controle de idempotência: checar se já existe compra com o mesmo external_id
+    const { data: existingPurchase, error: existingPurchaseError } = await supabase
+      .from('purchases')
+      .select('id')
+      .eq('external_id', webhookData.transaction_id || webhookData.id || webhookData.order_id)
+      .maybeSingle();
+
+    if (existingPurchase) {
+      console.warn('Compra já registrada para este external_id:', webhookData.transaction_id || webhookData.id || webhookData.order_id);
+      return new Response(
+        JSON.stringify({ success: true, message: 'Compra já registrada', purchase_id: existingPurchase.id }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Mapear dados da Cakto para nosso formato
@@ -47,7 +66,7 @@ serve(async (req) => {
       .single();
 
     if (purchaseError) {
-      console.error('Erro ao inserir compra:', purchaseError);
+      console.warn('Erro ao inserir compra:', purchaseError);
       return new Response('Database error', { status: 500 });
     }
 
@@ -67,33 +86,61 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Erro no webhook:', error);
+    console.warn('Erro no webhook:', error);
     return new Response('Internal server error', { status: 500 });
   }
 });
 
 async function validateCaktoWebhook(data: any, headers: Headers): Promise<boolean> {
-  // Validar com a chave específica da Cakto
+  // Validar com a chave específica da Cakto - apenas no header
   const authHeader = headers.get('authorization') || headers.get('x-webhook-key');
   
-  // Verificar se a chave está presente no header ou no body
-  if (authHeader === CAKTO_WEBHOOK_KEY || data.webhook_key === CAKTO_WEBHOOK_KEY) {
-    return true;
+  // Verificar se a chave está presente APENAS no header (mais seguro)
+  if (authHeader !== CAKTO_WEBHOOK_KEY) {
+    console.warn('Chave de webhook inválida ou ausente');
+    return false;
   }
 
-  // Validação básica dos campos obrigatórios
-  return !!(data.email && data.product_name && data.status);
+  // Validação rigorosa dos campos obrigatórios
+  const requiredFields = ['email', 'product_name', 'status'];
+  for (const field of requiredFields) {
+    if (!data[field]) {
+      console.warn(`Campo obrigatório ausente: ${field}`);
+      return false;
+    }
+  }
+
+  // Validar status de pagamento
+  const validStatuses = ['approved', 'paid', 'pending', 'cancelled', 'refunded'];
+  if (!validStatuses.includes(data.status)) {
+    console.warn(`Status de pagamento inválido: ${data.status}`);
+    return false;
+  }
+
+  return true;
 }
 
 function mapCaktoData(webhookData: any) {
-  // Mapear campos da Cakto para nosso formato
+  // Mapear campos da Cakto para nosso formato com lógica mais robusta
   let plan = 'basic';
   
-  // Detectar plano baseado no nome do produto
+  // Detectar plano baseado no nome do produto com lógica mais precisa
   const productName = (webhookData.product_name || '').toLowerCase();
-  if (productName.includes('premium') || productName.includes('pro')) {
+  const productId = (webhookData.product_id || '').toLowerCase();
+  
+  // Mapeamento mais específico
+  if (productName.includes('enterprise') || productId.includes('enterprise')) {
+    plan = 'enterprise';
+  } else if (productName.includes('premium') || productName.includes('pro') || 
+             productId.includes('premium') || productId.includes('pro')) {
     plan = 'premium';
+  } else if (productName.includes('basic') || productName.includes('starter') ||
+             productId.includes('basic') || productId.includes('starter')) {
+    plan = 'basic';
   }
+
+  // Log para debug
+  console.log(`Mapeamento de plano: "${productName}" -> ${plan}`);
 
   return {
     email: webhookData.email || webhookData.customer_email || webhookData.buyer_email,
@@ -123,8 +170,22 @@ async function createOrUpdateUserLicense(supabase: any, purchaseData: any) {
     const expiresAt = new Date();
     expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
-    // Determinar limite de PDFs baseado no plano
-    const pdfLimit = purchaseData.plan === 'premium' ? 1000 : 100;
+    // Determinar limite de PDFs baseado no plano com valores mais realistas
+    let pdfLimit: number;
+    switch (purchaseData.plan) {
+      case 'enterprise':
+        pdfLimit = 999999; // Ilimitado para enterprise
+        break;
+      case 'premium':
+        pdfLimit = 1000; // 1000 PDFs para premium
+        break;
+      case 'basic':
+      default:
+        pdfLimit = 100; // 100 PDFs para basic
+        break;
+    }
+
+    console.log(`Criando licença ${purchaseData.plan} com limite de ${pdfLimit} PDFs`);
 
     const licenseData = {
       user_id: userId,
@@ -147,26 +208,27 @@ async function createOrUpdateUserLicense(supabase: any, purchaseData: any) {
       .single();
 
     if (licenseError) {
-      console.error('Erro ao criar/atualizar licença:', licenseError);
+      console.warn('Erro ao criar/atualizar licença:', licenseError);
     } else {
       console.log('Licença criada/atualizada:', license);
     }
 
   } catch (error) {
-    console.error('Erro ao processar licença:', error);
+    console.warn('Erro ao processar licença:', error);
   }
 }
 
 async function notifyAdmin(supabase: any, purchaseData: any) {
-  // Registrar notificação para o admin
+  // Registrar notificação para todos os admins
   try {
-    await supabase.from('admin_notifications').insert({
+    const notifications = ADMIN_EMAILS.map(email => ({
       type: 'new_purchase',
       message: `Nova compra: ${purchaseData.email} - ${purchaseData.plan} - R$ ${purchaseData.amount}`,
       data: purchaseData,
-      admin_email: ADMIN_EMAIL,
-    });
+      admin_email: email,
+    }));
+    await supabase.from('admin_notifications').insert(notifications);
   } catch (error) {
-    console.error('Erro ao notificar admin:', error);
+    console.warn('Erro ao notificar admin:', error);
   }
 }
