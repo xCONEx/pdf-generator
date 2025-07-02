@@ -9,9 +9,10 @@ import { useSavedBudgets } from '@/hooks/useSavedBudgets';
 interface BackupModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onLoadBudget?: (budgetData: any) => void;
 }
 
-const BackupModal = ({ open, onOpenChange }: BackupModalProps) => {
+const BackupModal = ({ open, onOpenChange, onLoadBudget }: BackupModalProps) => {
   const { savedBudgets, loading, deleteBudgets, loadBudget } = useSavedBudgets();
   const [selectedBackups, setSelectedBackups] = useState<string[]>([]);
 
@@ -54,7 +55,11 @@ const BackupModal = ({ open, onOpenChange }: BackupModalProps) => {
   };
 
   const handleLoadBudget = async (budgetId: string) => {
-    await loadBudget(budgetId);
+    const budget = await loadBudget(budgetId);
+    if (budget && onLoadBudget) {
+      onLoadBudget(budget);
+      onOpenChange(false);
+    }
   };
 
   const totalValue = savedBudgets.reduce((sum, budget) => sum + budget.finalValue, 0);
@@ -149,15 +154,14 @@ const BackupModal = ({ open, onOpenChange }: BackupModalProps) => {
                 <div className="flex flex-col sm:flex-row gap-2">
                   <Button 
                     onClick={handleDownloadSelected}
-                    className="flex items-center bg-blue-600 hover:bg-blue-700 text-white"
+                    className="flex items-center bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
                   >
                     <Download className="w-4 h-4 mr-2" />
                     Baixar Selecionados ({selectedBackups.length})
                   </Button>
                   <Button 
                     onClick={handleDeleteSelected}
-                    variant="destructive"
-                    className="flex items-center"
+                    className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
                     Excluir Selecionados ({selectedBackups.length})
@@ -216,13 +220,12 @@ const BackupModal = ({ open, onOpenChange }: BackupModalProps) => {
                         </div>
                         
                         <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline"
+                          <Button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleLoadBudget(budget.id);
                             }}
+                            className="ml-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
                           >
                             Carregar
                           </Button>
