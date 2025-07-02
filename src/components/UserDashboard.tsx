@@ -1,4 +1,3 @@
-
 import { User } from '@supabase/supabase-js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { BarChart3, Crown, FileText, Calendar, Database } from 'lucide-react';
 import { useState } from 'react';
 import AnalyticsModal from './AnalyticsModal';
 import BackupModal from './BackupModal';
+import { useNavigate } from 'react-router-dom';
 
 interface UserLicense {
   id: string;
@@ -25,6 +25,12 @@ interface UserDashboardProps {
 const UserDashboard = ({ user, license }: UserDashboardProps) => {
   const [analyticsModalOpen, setAnalyticsModalOpen] = useState(false);
   const [backupModalOpen, setBackupModalOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await import('@/integrations/supabase/client').then(({ supabase }) => supabase.auth.signOut());
+    navigate('/');
+  };
 
   const getPlanDisplayName = () => {
     switch (license.plan) {
@@ -50,6 +56,11 @@ const UserDashboard = ({ user, license }: UserDashboardProps) => {
 
   return (
     <div className="mb-6">
+      <div className="flex justify-end mb-2">
+        <Button onClick={handleLogout} className="bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full px-4 py-2 text-sm font-semibold shadow">
+          Sair
+        </Button>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {/* Status da Licença */}
         <Card>
