@@ -29,33 +29,36 @@ export const generatePDF = async (budgetData: BudgetData) => {
   let yPosition = 30;
 
   // Função para carregar e adicionar logo
-  const addLogo = async () => {
-    const logoWidth = 30;
-    const logoHeight = 15;
-    if (budgetData.companyInfo.logoUrl) {
-      try {
-        if (budgetData.companyInfo.logoUrl.startsWith('data:')) {
-          pdf.addImage(budgetData.companyInfo.logoUrl, 'JPEG', margin, 5, logoWidth, logoHeight);
-          return margin + logoWidth + 10; // Espaço após a logo
-        }
-        const response = await fetch(budgetData.companyInfo.logoUrl);
-        const blob = await response.blob();
-        const reader = new FileReader();
-        return new Promise((resolve) => {
-          reader.onload = () => {
-            const base64 = reader.result as string;
-            pdf.addImage(base64, 'JPEG', margin, 5, logoWidth, logoHeight);
-            resolve(margin + logoWidth + 10);
-          };
-          reader.readAsDataURL(blob);
-        });
-      } catch (error) {
-        console.error('Erro ao carregar logo:', error);
-        return margin;
+  // Função para carregar e adicionar logo do lado direito
+const addLogo = async () => {
+  const logoWidth = 30;
+  const logoHeight = 15;
+  const logoX = pageWidth - margin - logoWidth; // posiciona no canto direito
+  const logoY = 5;
+
+  if (budgetData.companyInfo.logoUrl) {
+    try {
+      if (budgetData.companyInfo.logoUrl.startsWith('data:')) {
+        pdf.addImage(budgetData.companyInfo.logoUrl, 'JPEG', logoX, logoY, logoWidth, logoHeight);
+        return;
       }
+      const response = await fetch(budgetData.companyInfo.logoUrl);
+      const blob = await response.blob();
+      const reader = new FileReader();
+      return new Promise<void>((resolve) => {
+        reader.onload = () => {
+          const base64 = reader.result as string;
+          pdf.addImage(base64, 'JPEG', logoX, logoY, logoWidth, logoHeight);
+          resolve();
+        };
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error('Erro ao carregar logo:', error);
     }
-    return margin;
-  };
+  }
+};
+
 
   // Função para verificar quebra de página
   const checkPageBreak = async (spaceNeeded: number) => {
@@ -70,14 +73,19 @@ export const generatePDF = async (budgetData: BudgetData) => {
 
   // Cabeçalho com a cor do tema e logo
   const addHeader = async () => {
-    pdf.setFillColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
-    pdf.rect(0, 0, pageWidth, 25, 'F');
-    const logoTextX = await addLogo();
-    pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(20);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('ORÇAMENTO', logoTextX, 18);
-  };
+  pdf.setFillColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+  pdf.rect(0, 0, pageWidth, 25, 'F');
+
+  await addLogo(); // adiciona logo no canto direito
+
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFontSize(20);
+  pdf.setFont('helvetica', 'bold');
+
+  // título fixo no canto esquerdo
+  pdf.text('ORÇAMENTO', margin, 18);
+};
+
 
   // Função para adicionar seção com a cor do tema
   const addSection = (title: string, yPos: number) => {
