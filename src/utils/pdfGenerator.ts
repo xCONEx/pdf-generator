@@ -2,7 +2,7 @@
 import { jsPDF } from 'jspdf';
 import { BudgetData, COLOR_THEMES } from '@/types/budget';
 import NotoSans from '../fonts/NotoSans-Regular.ttf';
-
+ 
 export const generatePDF = async (budgetData: BudgetData) => {
   console.log('Iniciando geração de PDF com dados:', budgetData);
   
