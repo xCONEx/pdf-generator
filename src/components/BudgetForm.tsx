@@ -74,69 +74,57 @@ const CurrencyInput = ({
   placeholder?: string;
   className?: string;
 }) => {
-  const [displayValue, setDisplayValue] = useState(formatCurrencyInput(value));
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState('');
 
-  useEffect(() => {
-    setDisplayValue(formatCurrencyInput(value));
-  }, [value]);
+  const handleFocus = () => {
+    setIsEditing(true);
+    // Remove formatação para permitir edição
+    if (value === 0) {
+      setEditValue('');
+    } else {
+      // Converte o valor para formato de edição (sem R$ e com vírgula)
+      const stringValue = value.toString();
+      setEditValue(stringValue.includes('.') ? stringValue.replace('.', ',') : stringValue);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     
-    // Se o campo está vazio, permite digitar
-    if (inputValue === '' || inputValue === 'R$ ') {
-      setDisplayValue(inputValue);
-      onChange(0);
-      return;
-    }
-
-    // Remove caracteres não numéricos exceto vírgula
+    // Permite apenas números e vírgula
     const cleanValue = inputValue.replace(/[^\d,]/g, '');
     
-    if (cleanValue === '') {
-      setDisplayValue('R$ 0,00');
-      onChange(0);
-      return;
-    }
-
-    // Se não tem vírgula, adiciona duas casas decimais
-    if (!cleanValue.includes(',')) {
-      const number = parseInt(cleanValue) || 0;
-      const formatted = `R$ ${number.toLocaleString('pt-BR')},00`;
-      setDisplayValue(formatted);
-      onChange(number);
-      return;
-    }
-
-    // Se tem vírgula, formata corretamente
-    const parts = cleanValue.split(',');
-    const integerPart = parts[0] || '0';
-    const decimalPart = parts[1] || '00';
+    // Limita uma vírgula por vez
+    const commaCount = (cleanValue.match(/,/g) || []).length;
+    if (commaCount > 1) return;
     
     // Limita casas decimais a 2
-    const formattedDecimal = decimalPart.slice(0, 2).padEnd(2, '0');
+    if (cleanValue.includes(',')) {
+      const parts = cleanValue.split(',');
+      if (parts[1] && parts[1].length > 2) return;
+    }
     
-    // Formata parte inteira com pontos
-    const formattedInteger = parseInt(integerPart).toLocaleString('pt-BR');
-    
-    const formatted = `R$ ${formattedInteger},${formattedDecimal}`;
-    setDisplayValue(formatted);
+    setEditValue(cleanValue);
     
     // Converte para número
-    const numericValue = parseFloat(`${integerPart}.${formattedDecimal}`);
+    const numericValue = parseFloat(cleanValue.replace(',', '.')) || 0;
     onChange(numericValue);
   };
 
   const handleBlur = () => {
-    // Garante formatação correta ao sair do campo
-    setDisplayValue(formatCurrencyInput(value));
+    setIsEditing(false);
+    setEditValue('');
   };
+
+  const displayValue = isEditing ? editValue : formatCurrencyInput(value);
 
   return (
     <Input
       type="text"
       value={displayValue}
       onChange={handleChange}
+      onFocus={handleFocus}
       onBlur={handleBlur}
       placeholder={placeholder}
       className={className}
