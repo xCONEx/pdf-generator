@@ -1,20 +1,12 @@
 // @ts-ignore
 import { jsPDF } from 'jspdf';
 import { BudgetData, COLOR_THEMES } from '@/types/budget';
-import '../fonts/NotoSans-Regular.js';
-import '../fonts/NotoSans-Bold.js'; // Se gerou o bold
+// import NotoSans from '../fonts/NotoSans-Regular.ttf';
 
 export const generatePDF = async (budgetData: BudgetData) => {
   console.log('Iniciando geração de PDF com dados:', budgetData);
   
   const pdf = new jsPDF();
-  
-  // Registrar fonte NotoSans
-  if (!(pdf as any).getFontList()['NotoSans']) {
-    pdf.addFileToVFS('NotoSans', 'normal');
-    pdf.addFont('NotoSans', 'normal');
-  }
-  pdf.setFont('NotoSans', 'normal');
   
   // Obter as cores do tema selecionado
   const currentTheme = COLOR_THEMES[budgetData.colorTheme as keyof typeof COLOR_THEMES];
@@ -106,9 +98,8 @@ export const generatePDF = async (budgetData: BudgetData) => {
   const logoTextX = await addLogo();
 
   pdf.setTextColor(255, 255, 255);
+  pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(20);
-  pdf.setFontSize(20);
-  pdf.setFont('NotoSans', 'bold');
   // título fixo no canto esquerdo
   pdf.text('ORÇAMENTO', margin, 18);
 };
@@ -120,12 +111,12 @@ export const generatePDF = async (budgetData: BudgetData) => {
     pdf.rect(margin, yPos - 5, contentWidth, 12, 'F');
     
     pdf.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+    pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(14);
-    pdf.setFont('NotoSans', 'bold');
     pdf.text(title, margin + 2, yPos + 3);
     
     pdf.setTextColor(0, 0, 0);
-    pdf.setFont('NotoSans', 'normal');
+    pdf.setFont('helvetica', 'normal');
   };
 
   // Inicializar primeira página
@@ -138,7 +129,7 @@ export const generatePDF = async (budgetData: BudgetData) => {
   yPosition += 15;
 
   pdf.setFontSize(10);
-  pdf.setFont('NotoSans', 'normal');
+  pdf.setFont('helvetica', 'normal');
   
   const companyData = [
     `Empresa: ${budgetData.companyInfo.name}`,
@@ -160,7 +151,7 @@ export const generatePDF = async (budgetData: BudgetData) => {
   yPosition += 15;
 
   pdf.setFontSize(10);
-  pdf.setFont('NotoSans', 'normal');
+  pdf.setFont('helvetica', 'normal');
   
   const clientData = [
     `Cliente: ${budgetData.clientInfo.name}`,
@@ -186,8 +177,8 @@ export const generatePDF = async (budgetData: BudgetData) => {
   pdf.rect(margin, yPosition - 5, contentWidth, 10, 'F');
   
   pdf.setTextColor(0, 0, 0);
+  pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(9);
-  pdf.setFont('NotoSans', 'bold');
   
   pdf.text('DESCRIÇÃO', margin + 2, yPosition);
   pdf.text('QTD', margin + 90, yPosition);
@@ -196,7 +187,7 @@ export const generatePDF = async (budgetData: BudgetData) => {
   yPosition += 8;
 
   // Itens
-  pdf.setFont('NotoSans', 'normal');
+  pdf.setFont('helvetica', 'normal');
   let subtotal = 0;
   
   for (let index = 0; index < budgetData.items.length; index++) {
@@ -226,8 +217,8 @@ export const generatePDF = async (budgetData: BudgetData) => {
   pdf.setFillColor(248, 249, 250);
   pdf.rect(margin + 80, yPosition, contentWidth - 80, 35, 'F');
   
+  pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(11);
-  pdf.setFont('NotoSans', 'bold');
   
   pdf.text('Subtotal:', margin + 85, yPosition + 8);
   pdf.text(`R$ ${subtotal.toFixed(2)}`, margin + 130, yPosition + 8);
@@ -253,7 +244,7 @@ export const generatePDF = async (budgetData: BudgetData) => {
     yPosition += 15;
 
     pdf.setFontSize(10);
-    pdf.setFont('NotoSans', 'normal');
+    pdf.setFont('helvetica', 'normal');
     const conditionsLines = pdf.splitTextToSize(budgetData.specialConditions, contentWidth - 4);
     pdf.text(conditionsLines, margin + 2, yPosition);
     yPosition += conditionsLines.length * 5 + 15;
@@ -266,7 +257,7 @@ export const generatePDF = async (budgetData: BudgetData) => {
     yPosition += 15;
 
     pdf.setFontSize(10);
-    pdf.setFont('NotoSans', 'normal');
+    pdf.setFont('helvetica', 'normal');
     const observationsLines = pdf.splitTextToSize(budgetData.observations, contentWidth - 4);
     pdf.text(observationsLines, margin + 2, yPosition);
     yPosition += observationsLines.length * 5 + 20;
