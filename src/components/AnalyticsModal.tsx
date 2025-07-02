@@ -167,7 +167,7 @@ const AnalyticsModal = ({ open, onOpenChange }: AnalyticsModalProps) => {
             </CardHeader>
             <CardContent>
               {analytics.recentBudgets.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2">
                   {analytics.recentBudgets.map((budget) => (
                     <div key={budget.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg">
                       <div className="mb-2 sm:mb-0">
@@ -181,10 +181,9 @@ const AnalyticsModal = ({ open, onOpenChange }: AnalyticsModalProps) => {
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(budget.status)}`}>
                           {budget.status}
                         </span>
-                        <Button 
-                          size="sm" 
-                          variant="destructive"
+                        <Button
                           onClick={() => handleDeleteBudget(budget.id)}
+                          className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
