@@ -11,8 +11,8 @@ export const generatePDF = async (budgetData: BudgetData) => {
   
   // Registrar fonte NotoSans
   if (!(pdf as any).getFontList()['NotoSans']) {
-    pdf.addFileToVFS('NotoSans-Regular.ttf', NotoSans);
-    pdf.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
+    pdf.addFileToVFS('NotoSans', 'normal');
+    pdf.addFont('NotoSans', 'normal');
   }
   pdf.setFont('NotoSans', 'normal');
   
