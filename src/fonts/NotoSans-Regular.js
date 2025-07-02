@@ -7,4 +7,4 @@ const font = {
   }
 };
 
-addFont(font);
+//addFont(font);
