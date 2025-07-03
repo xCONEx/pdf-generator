@@ -224,13 +224,13 @@ const AdminPanel = () => {
 
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://linxpynrwpqokugizynm.supabase.co';
-      const webhookKey = '08f50a3f-44c8-444d-98ad-3e8cd2e94957';
+      
 
       const response = await fetch(`${supabaseUrl}/functions/v1/cakto-webhook`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'x-webhook-key': webhookKey
+          'Content-Type': 'application/json'
+          //'x-webhook-key': webhookKey
         },
         body: JSON.stringify(webhookTestData)
       });
