@@ -230,8 +230,7 @@ const AdminPanel = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': webhookKey,
-          'x-webhook-key': webhookKey
+          'Authorization': webhookKey
         },
         body: JSON.stringify(webhookTestData)
       });
@@ -374,21 +373,35 @@ const AdminPanel = () => {
                 </div>
                 <div>
                   <Label htmlFor="test-product">Nome do Produto</Label>
-                  <Input
-                    id="test-product"
+                  <Select
                     value={webhookTestData.product_name}
-                    onChange={(e) => setWebhookTestData(prev => ({ ...prev, product_name: e.target.value }))}
-                    placeholder="Plano Premium - OrçaFácilPDF"
-                  />
+                    onValueChange={(value) => setWebhookTestData(prev => ({ ...prev, product_name: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Plano Básico - OrçaFácilPDF">Plano Básico - OrçaFácilPDF</SelectItem>
+                      <SelectItem value="Plano Premium - OrçaFácilPDF">Plano Premium - OrçaFácilPDF</SelectItem>
+                      <SelectItem value="Plano Enterprise - OrçaFácilPDF">Plano Enterprise - OrçaFácilPDF</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label htmlFor="test-product-id">ID do Produto</Label>
-                  <Input
-                    id="test-product-id"
+                  <Select
                     value={webhookTestData.product_id}
-                    onChange={(e) => setWebhookTestData(prev => ({ ...prev, product_id: e.target.value }))}
-                    placeholder="premium_plan"
-                  />
+                    onValueChange={(value) => setWebhookTestData(prev => ({ ...prev, product_id: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="basic_plan">basic_plan</SelectItem>
+                      <SelectItem value="premium_plan">premium_plan</SelectItem>
+                      <SelectItem value="enterprise_plan">enterprise_plan</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label htmlFor="test-status">Status do Pagamento</Label>
