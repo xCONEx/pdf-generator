@@ -75,27 +75,39 @@ const SystemStatusMonitor = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer 08f50a3f-44c8-444d-98ad-3e8cd2e94957'
+            'Authorization': '08f50a3f-44c8-444d-98ad-3e8cd2e94957'
           },
           body: JSON.stringify({
             email: 'test@example.com',
             product_name: 'Test Product',
-            status: 'test'
+            status: 'approved',
+            amount: '10.00',
+            transaction_id: `status_test_${Date.now()}`
           })
         });
         
-        // 401/403 são esperados pois estamos enviando dados de teste inválidos
-        // mas o webhook está respondendo, então está online
-        if (response.status === 401 || response.status === 403) {
-          console.log('Webhook online - rejeitou dados de teste (esperado)');
+        // Se receber 200, webhook está funcionando perfeitamente
+        if (response.status === 200) {
+          console.log('Webhook online - aceitou dados de teste válidos');
           newStatus.webhook = 'online';
-        } else if (response.ok) {
-          console.log('Webhook online - aceitou dados de teste');
+        } 
+        // Se receber 401, webhook está online mas rejeitou (pode ser idempotência)
+        else if (response.status === 401) {
+          console.log('Webhook online - rejeitou dados de teste (possível idempotência)');
           newStatus.webhook = 'online';
-        } else if (response.status >= 500) {
+        }
+        // Se receber 403, webhook está online mas dados inválidos
+        else if (response.status === 403) {
+          console.log('Webhook online - dados inválidos (esperado)');
+          newStatus.webhook = 'online';
+        }
+        // Se receber 500+, webhook está com problema
+        else if (response.status >= 500) {
           console.error('Webhook offline - erro do servidor:', response.status);
           newStatus.webhook = 'offline';
-        } else {
+        } 
+        // Outros status indicam que o webhook está respondendo
+        else {
           console.log('Webhook online - status:', response.status);
           newStatus.webhook = 'online';
         }
