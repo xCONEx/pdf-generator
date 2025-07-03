@@ -8,7 +8,8 @@ if (typeof Deno !== 'undefined' && Deno.env) {
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-webhook-key',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
 };
 
 const CAKTO_WEBHOOK_KEY = Deno.env.get('CAKTO_WEBHOOK_KEY') ?? '';
@@ -124,23 +125,21 @@ function mapCaktoData(webhookData: any) {
   // Mapear campos da Cakto para nosso formato com lógica mais robusta
   let plan = 'basic';
   
-  // Detectar plano baseado no nome do produto com lógica mais precisa
-  const productName = (webhookData.product_name || '').toLowerCase();
+  // Detectar plano baseado no ID do produto da Cakto
   const productId = (webhookData.product_id || '').toLowerCase();
+  const productName = (webhookData.product_name || '').toLowerCase();
   
-  // Mapeamento mais específico
-  if (productName.includes('enterprise') || productId.includes('enterprise')) {
+  // Mapeamento baseado nos IDs específicos da Cakto
+  if (productId === '3b6s5eo' || productName.includes('empresarial') || productName.includes('enterprise')) {
     plan = 'enterprise';
-  } else if (productName.includes('premium') || productName.includes('pro') || 
-             productId.includes('premium') || productId.includes('pro')) {
+  } else if (productId === 'c4jwped' || productName.includes('profissional') || productName.includes('premium')) {
     plan = 'premium';
-  } else if (productName.includes('basic') || productName.includes('starter') ||
-             productId.includes('basic') || productId.includes('starter')) {
+  } else if (productId === '33chw64' || productName.includes('básico') || productName.includes('basic')) {
     plan = 'basic';
   }
 
   // Log para debug
-  console.log(`Mapeamento de plano: "${productName}" -> ${plan}`);
+  console.log(`Mapeamento de plano: ID "${productId}" - Nome "${productName}" -> ${plan}`);
 
   return {
     email: webhookData.email || webhookData.customer_email || webhookData.buyer_email,
