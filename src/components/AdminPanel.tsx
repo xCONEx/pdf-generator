@@ -230,7 +230,7 @@ const AdminPanel = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': webhookKey
+          'x-webhook-key': webhookKey
         },
         body: JSON.stringify(webhookTestData)
       });
