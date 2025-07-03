@@ -6,32 +6,36 @@ export interface CaktoPlan {
   pdfLimit: number;
   price: number;
   description: string;
+  caktoUrl: string;
 }
 
 export const CAKTO_PLANS: CaktoPlan[] = [
   {
-    id: 'basic_plan',
+    id: '33chw64',
     name: 'Plano Básico - OrçaFácilPDF',
     internalPlan: 'basic',
     pdfLimit: 100,
-    price: 27.00,
-    description: '100 PDFs por mês - Ideal para iniciantes'
+    price: 19.90,
+    description: '100 PDFs por mês - Ideal para iniciantes',
+    caktoUrl: 'https://pay.cakto.com.br/33chw64'
   },
   {
-    id: 'premium_plan',
-    name: 'Plano Premium - OrçaFácilPDF',
+    id: 'c4jwped',
+    name: 'Plano Profissional - OrçaFácilPDF',
     internalPlan: 'premium',
     pdfLimit: 1000,
-    price: 97.00,
-    description: '1.000 PDFs por mês - Para profissionais'
+    price: 39.90,
+    description: '1.000 PDFs por mês - Para profissionais',
+    caktoUrl: 'https://pay.cakto.com.br/c4jwped'
   },
   {
-    id: 'enterprise_plan',
-    name: 'Plano Enterprise - OrçaFácilPDF',
+    id: '3b6s5eo',
+    name: 'Plano Empresarial - OrçaFácilPDF',
     internalPlan: 'enterprise',
     pdfLimit: 999999,
-    price: 297.00,
-    description: 'PDFs ilimitados - Para empresas'
+    price: 59.90,
+    description: 'PDFs ilimitados - Para empresas',
+    caktoUrl: 'https://pay.cakto.com.br/3b6s5eo'
   }
 ];
 
