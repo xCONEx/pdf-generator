@@ -42,10 +42,10 @@ const AdminPanel = () => {
   const [showWebhookTest, setShowWebhookTest] = useState(false);
   const [webhookTestData, setWebhookTestData] = useState({
     email: 'teste@exemplo.com',
-    product_name: 'Plano Premium - OrçaFácilPDF',
+    product_name: 'Plano Profissional - OrçaFácilPDF',
     product_id: 'premium_plan',
     status: 'approved',
-    amount: '97.00',
+    amount: '39.90',
     transaction_id: `test_${Date.now()}`
   });
   const [webhookTestLoading, setWebhookTestLoading] = useState(false);
@@ -382,8 +382,8 @@ const AdminPanel = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Plano Básico - OrçaFácilPDF">Plano Básico - OrçaFácilPDF</SelectItem>
-                      <SelectItem value="Plano Premium - OrçaFácilPDF">Plano Premium - OrçaFácilPDF</SelectItem>
-                      <SelectItem value="Plano Enterprise - OrçaFácilPDF">Plano Enterprise - OrçaFácilPDF</SelectItem>
+                      <SelectItem value="Plano Profissional - OrçaFácilPDF">Plano Profissional - OrçaFácilPDF</SelectItem>
+                      <SelectItem value="Plano Empresarial - OrçaFácilPDF">Plano Empresarial - OrçaFácilPDF</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -481,10 +481,10 @@ const AdminPanel = () => {
                   onClick={() => {
                     setWebhookTestData({
                       email: 'teste@exemplo.com',
-                      product_name: 'Plano Premium - OrçaFácilPDF',
+                      product_name: 'Plano Profissional - OrçaFácilPDF',
                       product_id: 'premium_plan',
                       status: 'approved',
-                      amount: '97.00',
+                      amount: '39.90',
                       transaction_id: `test_${Date.now()}`
                     });
                     setWebhookTestResult(null);
