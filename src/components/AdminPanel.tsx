@@ -43,9 +43,9 @@ const AdminPanel = () => {
   const [webhookTestData, setWebhookTestData] = useState({
     email: 'teste@exemplo.com',
     product_name: 'Plano Profissional - OrçaFácilPDF',
-    product_id: 'premium_plan',
+    product_id: 'c4jwped',
     status: 'approved',
-    amount: '39.90',
+    amount: '3990',
     transaction_id: `test_${Date.now()}`
   });
   const [webhookTestLoading, setWebhookTestLoading] = useState(false);
@@ -235,7 +235,12 @@ const AdminPanel = () => {
         body: JSON.stringify(webhookTestData)
       });
 
-      const responseData = await response.json();
+      let responseData;
+      try {
+        responseData = await response.json();
+      } catch (e) {
+        responseData = { raw: await response.text() };
+      }
 
       setWebhookTestResult({
         status: response.status,
@@ -247,7 +252,7 @@ const AdminPanel = () => {
           title: 'Webhook Testado com Sucesso',
           description: 'O webhook foi processado corretamente',
         });
-        loadAdminData(); // Recarregar dados para ver a nova compra
+        loadAdminData();
       } else {
         toast({
           title: 'Erro no Webhook',
@@ -256,7 +261,6 @@ const AdminPanel = () => {
         });
       }
     } catch (error) {
-      console.error('Erro ao testar webhook:', error);
       setWebhookTestResult({
         status: 0,
         data: { error: error.message }
@@ -422,12 +426,12 @@ const AdminPanel = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="test-amount">Valor</Label>
+                  <Label htmlFor="test-amount">Valor (em centavos)</Label>
                   <Input
                     id="test-amount"
                     value={webhookTestData.amount}
                     onChange={(e) => setWebhookTestData(prev => ({ ...prev, amount: e.target.value }))}
-                    placeholder="97.00"
+                    placeholder="2990"
                   />
                 </div>
                 <div>
@@ -484,7 +488,7 @@ const AdminPanel = () => {
                       product_name: 'Plano Profissional - OrçaFácilPDF',
                       product_id: 'c4jwped',
                       status: 'approved',
-                      amount: '39.90',
+                      amount: '3990',
                       transaction_id: `test_${Date.now()}`
                     });
                     setWebhookTestResult(null);
