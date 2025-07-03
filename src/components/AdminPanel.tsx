@@ -397,9 +397,9 @@ const AdminPanel = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="basic_plan">basic_plan</SelectItem>
-                      <SelectItem value="premium_plan">premium_plan</SelectItem>
-                      <SelectItem value="enterprise_plan">enterprise_plan</SelectItem>
+                      <SelectItem value="33chw64">Plano Básico (33chw64)</SelectItem>
+                      <SelectItem value="c4jwped">Plano Profissional (c4jwped)</SelectItem>
+                      <SelectItem value="3b6s5eo">Plano Empresarial (3b6s5eo)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -482,7 +482,7 @@ const AdminPanel = () => {
                     setWebhookTestData({
                       email: 'teste@exemplo.com',
                       product_name: 'Plano Profissional - OrçaFácilPDF',
-                      product_id: 'premium_plan',
+                      product_id: 'c4jwped',
                       status: 'approved',
                       amount: '39.90',
                       transaction_id: `test_${Date.now()}`
