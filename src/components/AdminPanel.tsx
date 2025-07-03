@@ -2,11 +2,16 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowRight, Plus, FileText, Edit, RefreshCw } from 'lucide-react';
+import { ArrowRight, Plus, FileText, Edit, RefreshCw, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AddMemberForm from './AddMemberForm';
 import EditPlanForm from './EditPlanForm';
 import SystemStatusMonitor from './SystemStatusMonitor';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Purchase {
   id: string;
@@ -34,6 +39,17 @@ const AdminPanel = () => {
   const [loading, setLoading] = useState(true);
   const [showAddMember, setShowAddMember] = useState(false);
   const [editingLicense, setEditingLicense] = useState<UserLicense | null>(null);
+  const [showWebhookTest, setShowWebhookTest] = useState(false);
+  const [webhookTestData, setWebhookTestData] = useState({
+    email: 'teste@exemplo.com',
+    product_name: 'Plano Premium - OrçaFácilPDF',
+    product_id: 'premium_plan',
+    status: 'approved',
+    amount: '97.00',
+    transaction_id: `test_${Date.now()}`
+  });
+  const [webhookTestLoading, setWebhookTestLoading] = useState(false);
+  const [webhookTestResult, setWebhookTestResult] = useState<any>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -202,6 +218,60 @@ const AdminPanel = () => {
     navigate('/vendas');
   };
 
+  const testWebhook = async () => {
+    setWebhookTestLoading(true);
+    setWebhookTestResult(null);
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://linxpynrwpqokugizynm.supabase.co';
+      const webhookKey = '08f50a3f-44c8-444d-98ad-3e8cd2e94957';
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/cakto-webhook`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': webhookKey,
+          'x-webhook-key': webhookKey
+        },
+        body: JSON.stringify(webhookTestData)
+      });
+
+      const responseData = await response.json();
+
+      setWebhookTestResult({
+        status: response.status,
+        data: responseData
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Webhook Testado com Sucesso',
+          description: 'O webhook foi processado corretamente',
+        });
+        loadAdminData(); // Recarregar dados para ver a nova compra
+      } else {
+        toast({
+          title: 'Erro no Webhook',
+          description: `Status: ${response.status} - ${responseData.error || 'Erro desconhecido'}`,
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao testar webhook:', error);
+      setWebhookTestResult({
+        status: 0,
+        data: { error: error.message }
+      });
+      toast({
+        title: 'Erro de Conexão',
+        description: 'Não foi possível conectar ao webhook',
+        variant: 'destructive',
+      });
+    } finally {
+      setWebhookTestLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -238,19 +308,13 @@ const AdminPanel = () => {
                 <RefreshCw size={14} />
                 <span>Corrigir Contadores</span>
               </Button>
-<a
-  href="https://orcafacilpdf.vercel.app"
-  target="_blank"
-  rel="noopener noreferrer"
->
-  <Button
-    className="flex items-center justify-center space-x-2 text-xs sm:text-sm h-8 sm:h-9"
-    size="sm"
-  >
-    <ArrowRight size={14} />
-    <span>Página de Vendas</span>
-  </Button>
-</a>
+              <Button
+                onClick={() => setShowWebhookTest(true)}
+                className="flex items-center justify-center space-x-2 text-xs sm:text-sm h-8 sm:h-9 bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                <Zap size={14} />
+                <span>Testar Webhook</span>
+              </Button>
               <Button
                 onClick={goToPdfGenerator}
                 variant="secondary"
@@ -286,6 +350,163 @@ const AdminPanel = () => {
             }}
           />
         )}
+
+        {/* Modal para testar webhook */}
+        <Dialog open={showWebhookTest} onOpenChange={setShowWebhookTest}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center text-purple-800">
+                <Zap className="w-6 h-6 mr-2" />
+                Testar Webhook da Cakto
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="test-email">Email do Cliente</Label>
+                  <Input
+                    id="test-email"
+                    value={webhookTestData.email}
+                    onChange={(e) => setWebhookTestData(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="cliente@exemplo.com"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="test-product">Nome do Produto</Label>
+                  <Input
+                    id="test-product"
+                    value={webhookTestData.product_name}
+                    onChange={(e) => setWebhookTestData(prev => ({ ...prev, product_name: e.target.value }))}
+                    placeholder="Plano Premium - OrçaFácilPDF"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="test-product-id">ID do Produto</Label>
+                  <Input
+                    id="test-product-id"
+                    value={webhookTestData.product_id}
+                    onChange={(e) => setWebhookTestData(prev => ({ ...prev, product_id: e.target.value }))}
+                    placeholder="premium_plan"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="test-status">Status do Pagamento</Label>
+                  <Select
+                    value={webhookTestData.status}
+                    onValueChange={(value) => setWebhookTestData(prev => ({ ...prev, status: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="approved">Aprovado</SelectItem>
+                      <SelectItem value="paid">Pago</SelectItem>
+                      <SelectItem value="pending">Pendente</SelectItem>
+                      <SelectItem value="cancelled">Cancelado</SelectItem>
+                      <SelectItem value="refunded">Reembolsado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="test-amount">Valor</Label>
+                  <Input
+                    id="test-amount"
+                    value={webhookTestData.amount}
+                    onChange={(e) => setWebhookTestData(prev => ({ ...prev, amount: e.target.value }))}
+                    placeholder="97.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="test-transaction">ID da Transação</Label>
+                  <Input
+                    id="test-transaction"
+                    value={webhookTestData.transaction_id}
+                    onChange={(e) => setWebhookTestData(prev => ({ ...prev, transaction_id: e.target.value }))}
+                    placeholder="transacao_123"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label>Payload Completo (JSON)</Label>
+                <Textarea
+                  value={JSON.stringify(webhookTestData, null, 2)}
+                  onChange={(e) => {
+                    try {
+                      const parsed = JSON.parse(e.target.value);
+                      setWebhookTestData(parsed);
+                    } catch (error) {
+                      // Ignorar erro de parsing durante digitação
+                    }
+                  }}
+                  rows={6}
+                  className="font-mono text-sm"
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={testWebhook}
+                  disabled={webhookTestLoading}
+                  className="flex-1"
+                >
+                  {webhookTestLoading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Testando...
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-4 h-4 mr-2" />
+                      Enviar Teste
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setWebhookTestData({
+                      email: 'teste@exemplo.com',
+                      product_name: 'Plano Premium - OrçaFácilPDF',
+                      product_id: 'premium_plan',
+                      status: 'approved',
+                      amount: '97.00',
+                      transaction_id: `test_${Date.now()}`
+                    });
+                    setWebhookTestResult(null);
+                  }}
+                >
+                  Resetar
+                </Button>
+              </div>
+
+              {webhookTestResult && (
+                <div className="mt-4 p-4 rounded-lg border">
+                  <h4 className="font-semibold mb-2">Resultado do Teste:</h4>
+                  <div className="space-y-2">
+                    <div>
+                      <span className="font-medium">Status HTTP: </span>
+                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                        webhookTestResult.status >= 200 && webhookTestResult.status < 300
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {webhookTestResult.status}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium">Resposta: </span>
+                      <pre className="mt-1 p-2 bg-gray-100 rounded text-xs overflow-x-auto">
+                        {JSON.stringify(webhookTestResult.data, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Monitor de Status do Sistema */}
         <SystemStatusMonitor />
