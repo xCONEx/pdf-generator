@@ -12,8 +12,11 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
 };
 
-const CAKTO_WEBHOOK_KEY = Deno.env.get('CAKTO_WEBHOOK_KEY') ?? '';
+const CAKTO_WEBHOOK_KEY = Deno.env.get('CAKTO_WEBHOOK_KEY') ?? '08f50a3f-44c8-444d-98ad-3e8cd2e94957';
 const ADMIN_EMAILS = ['adm.financeflow@gmail.com', 'yuriadrskt@gmail.com'];
+
+// Log para debug da chave
+console.log('CAKTO_WEBHOOK_KEY carregada:', CAKTO_WEBHOOK_KEY ? 'SIM' : 'NÃO');
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -32,6 +35,18 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // Registrar evento no log de webhooks
+    try {
+      await supabase.from('webhook_logs').insert({
+        provider: 'cakto',
+        event_type: webhookData.event || webhookData.status || webhookData.type || 'unknown',
+        payload: webhookData,
+        received_at: new Date().toISOString(),
+      });
+    } catch (logError) {
+      console.warn('Erro ao registrar webhook em webhook_logs:', logError);
+    }
 
     // Validar webhook da Cakto
     const isValid = await validateCaktoWebhook(webhookData, req.headers);
@@ -96,9 +111,16 @@ async function validateCaktoWebhook(data: any, headers: Headers): Promise<boolea
   // Validar com a chave específica da Cakto - apenas no header
   const authHeader = headers.get('authorization') || headers.get('x-webhook-key');
   
+  // Log para debug
+  console.log('Headers recebidos:', Object.fromEntries(headers.entries()));
+  console.log('Chave esperada:', CAKTO_WEBHOOK_KEY);
+  console.log('Chave recebida:', authHeader);
+  
   // Verificar se a chave está presente APENAS no header (mais seguro)
   if (authHeader !== CAKTO_WEBHOOK_KEY) {
     console.warn('Chave de webhook inválida ou ausente');
+    console.warn('Esperada:', CAKTO_WEBHOOK_KEY);
+    console.warn('Recebida:', authHeader);
     return false;
   }
 
